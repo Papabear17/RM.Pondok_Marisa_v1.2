@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RM. Pondok Marisa - Menu Digital</title>
+    <meta name="description" content="Menu digital RM. Pondok Marisa – Cita Rasa Nusantara yang Menggugah Selera">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="menu-style.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Firebase SDK Compat (hanya Firestore, sesuai app.js) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="glass-header">
+        <div class="header-content">
+            <h1 id="brand-name">RM. Pondok Marisa</h1>
+            <p id="brand-tagline">Cita Rasa Nusantara yang Menggugah Selera</p>
+        </div>
+        <div class="header-bg"></div>
+    </header>
+
+    <main class="container">
+
+        <!-- Info Jam -->
+        <div class="info-alert">
+            <i class="ph ph-clock"></i>
+            <span id="open-hours">Buka Setiap Hari: 09.00 – 22.00</span>
+        </div>
+
+        <!-- Navigasi Kategori -->
+        <div class="category-nav-wrapper">
+            <nav id="category-nav" class="category-nav">
+                <button class="cat-btn active" data-filter="all">
+                    <span>🔥</span> Semua
+                </button>
+            </nav>
+        </div>
+
+        <!-- Daftar Menu -->
+        <div id="menu-container" class="menu-grid">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+                <p>Memuat menu...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FAB: Lihat Keranjang -->
+    <button class="cart-fab" id="cart-fab" onclick="openCart()">
+        <div class="cart-fab-info">
+            <span class="cart-fab-count" id="fab-count">0 item</span>
+            <span class="cart-fab-label">🛒 Lihat Keranjang</span>
+        </div>
+        <span class="cart-fab-total" id="fab-total">Rp 0</span>
+    </button>
+
+    <!-- Overlay Keranjang -->
+    <div class="cart-overlay" id="cart-overlay" onclick="closeCart()"></div>
+
+    <!-- Panel Keranjang -->
+    <div class="cart-panel" id="cart-panel">
+        <div class="cart-handle"></div>
+        <div class="cart-header">
+            <h2>🛒 Keranjang Pesanan</h2>
+            <button class="cart-close-btn" onclick="closeCart()">✕</button>
+        </div>
+
+        <div class="cart-items" id="cart-items-list"></div>
+
+        <div class="cart-summary">
+            <div class="summary-row">
+                <span>Jumlah Item</span>
+                <span id="summary-items-count">0 item</span>
+            </div>
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span id="summary-subtotal">Rp 0</span>
+            </div>
+            <div class="summary-row total">
+                <span>Total</span>
+                <span id="summary-total">Rp 0</span>
+            </div>
+        </div>
+
+        <div class="order-form">
+            <h3><i class="ph ph-note-pencil"></i> Detail Pesanan</h3>
+            
+            <div class="form-group">
+                <label>Tipe Pesanan *</label>
+                <div style="display:flex; gap:10px; margin-top:5px;">
+                    <label style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; padding:10px; border-radius:12px; text-align:center; cursor:pointer; font-weight:700; transition:0.3s;" id="label-dinein">
+                        <input type="radio" name="order-type" value="Dine In" checked onchange="toggleOrderType()" style="display:none;">
+                        🍽️ Makan di Tempat
+                    </label>
+                    <label style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; padding:10px; border-radius:12px; text-align:center; cursor:pointer; font-weight:700; transition:0.3s;" id="label-takeaway">
+                        <input type="radio" name="order-type" value="Take Away" onchange="toggleOrderType()" style="display:none;">
+                        🛵 Pesan Antar
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="order-name">Nama Pemesan *</label>
+                <input type="text" id="order-name" placeholder="Contoh: Budi Santoso" autocomplete="name">
+            </div>
+            
+            <div class="form-group" id="group-meja">
+                <label for="order-table">Nomor Meja *</label>
+                <input type="text" id="order-table" placeholder="Contoh: Meja 3">
+            </div>
+
+            <div class="form-group" id="group-alamat" style="display:none;">
+                <label for="order-address">Alamat Pengiriman *</label>
+                <textarea id="order-address" placeholder="Contoh: Jl. Sudirman No. 12, RT 01/02..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="order-note">Catatan (Opsional)</label>
+                <textarea id="order-note" placeholder="Contoh: Tidak pakai pedas, kurangi gula..."></textarea>
+            </div>
+            
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <label for="order-payment">Metode Pembayaran</label>
+                <select id="order-payment" onchange="togglePaymentInfo()">
+                    <option value="Kasir">Bayar Nanti di Kasir</option>
+                </select>
+            </div>
+            
+            <div id="payment-info-box" style="display:none; background:#F0FFF4; padding:15px; border-radius:14px; margin-top:10px; border: 1px solid #C6F6D5; font-size: 0.85rem; color: #276749; line-height: 1.5;">
+                <!-- Diisi oleh JS -->
+            </div>
+
+            <div id="payment-proof-container" style="display:none; margin-top: 15px;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Upload Bukti Pembayaran *</label>
+                <input type="file" id="payment-proof" accept="image/*" class="w-full p-2 border border-gray-200 rounded-xl" style="font-size: 0.85rem; background: white;">
+                <p style="font-size: 0.75rem; color: #e63946; margin-top: 5px; font-weight: 600;" id="proof-error"></p>
+            </div>
+        </div>
+
+        <button class="btn-order" id="btn-submit-order" onclick="submitOrder()">
+            🚀 Kirim Pesanan Sekarang
+        </button>
+    </div>
+
+    <!-- Halaman Sukses Pesan -->
+    <div class="order-success" id="order-success">
+        <div class="success-icon">🎉</div>
+        <h2>Pesanan Terkirim!</h2>
+        <p>Terima kasih, <strong id="success-name"></strong>!</p>
+        <p>Pesanan untuk <strong id="success-table"></strong> sedang diproses.</p>
+        <div class="order-id-badge" id="success-order-id"></div>
+        <p style="font-size:0.85rem;color:#8D99AE;margin-bottom:1.5rem">
+            Mohon tunggu, pesanan Anda akan segera disiapkan 🍽️
+        </p>
+        <button class="btn-back-menu" onclick="backToMenu()">← Kembali ke Menu</button>
+    </div>
+
+    <!-- Modal Varian -->
+    <div id="modalVarian" class="modal-varian" style="display: none;">
+        <div class="modal-varian-content">
+            <div class="modal-varian-header text-center">
+                <div class="modal-icon-container">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 32px; height: 32px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                </div>
+                <h3 id="varianNama" style="font-size: 1.25rem; font-weight: 800; text-transform: uppercase;">Ayam Goreng Kalasan</h3>
+                <p style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Sesuaikan pesanan pelanggan</p>
+            </div>
+            <div class="modal-varian-body">
+                <div id="varianList" class="flex-wrap-center">
+                    <button class="varian-chip">Dada</button>
+                    <button class="varian-chip">Paha</button>
+                </div>
+                <button class="btn-tambahkan-pesanan" onclick="tambahKeKeranjangFinal()">Tambahkan Ke Pesanan</button>
+                <button class="btn-batal-pesanan" onclick="closeModalVarian()" style="margin-top: 8px;">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="menu-app.js"></script>
+</body>
+</html>

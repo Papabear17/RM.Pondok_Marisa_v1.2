@@ -1,0 +1,496 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin – RM Pondok Marisa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --primary:#D90429; --primary-dark:#A4122D;
+            --green:#2D6A4F;   --green-dark:#1B4332;
+            --blue:#1D4ED8;    --orange:#EA580C;
+            --bg:#F8F9FA;      --surface:#FFFFFF;
+            --border:#E8EAED;  --muted:#718096;
+            --radius:14px;     --tr:all 0.25s ease;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Outfit',sans-serif;background:var(--bg);color:#1A202C;min-height:100vh;}
+
+        /* TOP BAR */
+        .top-bar{
+            background:linear-gradient(135deg,var(--primary) 0%,#B90422 100%);
+            padding:1.2rem 1.5rem; display:flex; align-items:center; justify-content:space-between;
+            position:sticky; top:0; z-index:200; box-shadow:0 4px 20px rgba(217,4,41,.2);
+        }
+        .top-bar h1{color:white;font-size:1.2rem;font-weight:900;display:flex;align-items:center;gap:8px;}
+        .top-bar a{color:rgba(255,255,255,.8);text-decoration:none;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:5px;}
+        .top-bar a:hover{color:white;}
+
+        /* TABS */
+        .tabs{display:flex;background:white;border-bottom:2px solid var(--border);padding:0 1.5rem;position:sticky;top:62px;z-index:100;}
+        .tab-btn{
+            padding:.9rem 1.3rem;font-size:.88rem;font-weight:700;border:none;background:none;cursor:pointer;
+            color:var(--muted);border-bottom:3px solid transparent;transition:var(--tr);
+            display:flex;align-items:center;gap:8px;font-family:'Outfit';margin-bottom:-2px;
+        }
+        .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);}
+        .tab-badge{
+            background:var(--primary);color:white;border-radius:50px;
+            font-size:.7rem;padding:2px 7px;font-weight:800;display:none;
+            animation:pulse 1.5s infinite;
+        }
+        .tab-badge.show{display:inline-block;}
+        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+
+        /* PANELS */
+        .panel{display:none;padding:1.5rem;max-width:700px;margin:0 auto;}
+        .panel.active{display:block;}
+
+        /* CARD */
+        .card{background:white;border-radius:16px;padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.05);border:1px solid var(--border);margin-bottom:1.25rem;}
+        .card h2{font-size:1rem;font-weight:800;color:var(--primary);margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+        .add-card{border:2px dashed var(--primary);background:#FFF8F8;}
+
+        label{font-weight:700;font-size:.82rem;display:block;margin-bottom:4px;color:#4A5568;}
+        input[type=text],input[type=number],select,textarea{
+            width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:10px;
+            font-family:'Outfit';font-size:.92rem;background:#FAFAFA;
+            transition:var(--tr);margin-bottom:.7rem;color:#1A202C;
+        }
+        input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);background:white;}
+        textarea{height:75px;resize:none;}
+        .flex-row{display:flex;gap:.75rem;}
+        .flex-row>div{flex:1;}
+
+        /* BUTTONS */
+        .btn{border:none;padding:.8rem 1.2rem;border-radius:10px;font-weight:700;font-size:.88rem;cursor:pointer;
+            font-family:'Outfit';transition:var(--tr);display:inline-flex;align-items:center;gap:7px;}
+        .btn-primary{background:var(--primary);color:white;width:100%;justify-content:center;margin-bottom:1.5rem;font-size:1rem;padding:1rem;}
+        .btn-primary:hover{background:var(--primary-dark);}
+        .btn-green{background:var(--green);color:white;}
+        .btn-green:hover{background:var(--green-dark);}
+        .btn-blue{background:var(--blue);color:white;}
+        .btn-orange{background:var(--orange);color:white;}
+        .btn-danger{background:#FEE2E2;color:#991B1B;}
+        .btn-full{width:100%;justify-content:center;margin-top:.5rem;}
+        .btn-sm{padding:.45rem .9rem;font-size:.78rem;border-radius:8px;}
+
+        /* ALERT */
+        .success-alert{background:#C6F6D5;color:#22543D;padding:.9rem 1rem;border-radius:10px;margin-bottom:1rem;font-weight:600;display:none;}
+        .error-alert{background:#FEE2E2;color:#991B1B;padding:.9rem 1rem;border-radius:10px;margin-bottom:1rem;font-weight:600;display:none;}
+
+        /* ITEM CARD */
+        .item-card{background:white;border:1px solid var(--border);border-radius:14px;padding:1.1rem;margin-bottom:.9rem;}
+        .item-card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;}
+        .item-name{font-weight:800;font-size:.95rem;color:#E0484A;}
+        .img-preview{width:70px;height:70px;object-fit:cover;border-radius:10px;border:1px solid var(--border);background:#eee;flex-shrink:0;}
+        .img-row{display:flex;gap:.75rem;align-items:center;margin-bottom:.7rem;}
+
+        /* ORDER CARD */
+        .order-card{background:white;border-radius:16px;padding:1.2rem;border:1px solid var(--border);
+            margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.04);transition:var(--tr);}
+        .order-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);}
+        .order-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.9rem;}
+        .order-id{font-weight:900;font-size:.95rem;}
+        .order-meta{font-size:.78rem;color:var(--muted);margin-top:2px;}
+        .status-badge{padding:.3rem .85rem;border-radius:50px;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;}
+        .status-pending{background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;}
+        .status-proses {background:#DBEAFE;color:#1E40AF;border:1px solid #BFDBFE;}
+        .status-selesai{background:#D1FAE5;color:#065F46;border:1px solid #A7F3D0;}
+        .status-tolak  {background:#FEE2E2;color:#991B1B;border:1px solid #FECACA;}
+        .order-info{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.75rem;}
+        .chip{background:#F1F5F9;border-radius:8px;padding:4px 10px;font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:4px;}
+        .order-items-box{background:#F9FAFB;border-radius:10px;padding:.7rem 1rem;margin-bottom:.75rem;}
+        .oi-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:.85rem;}
+        .oi-name{font-weight:600;}
+        .oi-qty{color:var(--muted);font-size:.78rem;}
+        .oi-sub{font-weight:700;color:var(--green);}
+        .order-note{background:#FFFBEB;border:1px solid #FEF3C7;border-radius:8px;padding:7px 12px;font-size:.8rem;color:#78350F;margin-bottom:.75rem;}
+        .order-total{font-size:1.05rem;font-weight:900;color:var(--primary);text-align:right;margin-bottom:.75rem;}
+        .order-actions{display:flex;gap:7px;flex-wrap:wrap;}
+        .order-actions .btn{flex:1;min-width:90px;justify-content:center;}
+
+        /* FILTER BAR */
+        .filter-bar{display:flex;gap:7px;margin-bottom:1rem;flex-wrap:wrap;}
+
+        /* EMPTY */
+        .empty-state{text-align:center;padding:3rem 1rem;color:var(--muted);}
+        .empty-state .icon{font-size:3rem;display:block;margin-bottom:.75rem;}
+
+        /* NOTIF */
+        #notif-bar{display:none;background:var(--primary);color:white;text-align:center;
+            padding:.55rem 1rem;font-size:.85rem;font-weight:700;cursor:pointer;
+            animation:slideDown .3s ease;}
+        @keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+
+        /* Info box */
+        .info-box{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:.75rem 1rem;
+            font-size:.82rem;color:#1E40AF;margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+
+        @media(max-width:580px){.flex-row{flex-direction:column;gap:0;}.order-actions .btn{min-width:75px;font-size:.75rem;}}
+    </style>
+
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<!-- NOTIF BAR -->
+<div id="notif-bar" onclick="switchTab('orders')">🔔 Ada pesanan baru! Klik untuk melihat.</div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+    <h1><i class="ph ph-storefront"></i> Admin – RM Pondok Marisa</h1>
+    <a href="menu.html"><i class="ph ph-arrow-left"></i> Lihat Menu</a>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('menu')" id="tab-menu-btn">
+        <i class="ph ph-fork-knife"></i> Kelola Menu
+    </button>
+    <button class="tab-btn" onclick="switchTab('orders')" id="tab-orders-btn">
+        <i class="ph ph-shopping-cart-simple"></i> Pesanan Masuk
+        <span class="tab-badge" id="pending-badge">0</span>
+    </button>
+</div>
+
+<!-- ═══════════════════════ TAB: MENU ═══════════════════════ -->
+<div class="panel active" id="panel-menu">
+
+    <div id="success-alert" class="success-alert"></div>
+    <div id="error-alert" class="error-alert"></div>
+
+    <div class="info-box">
+        <i class="ph ph-info"></i>
+        Data menu disimpan secara lokal di perangkat ini (localStorage).
+    </div>
+
+    <button class="btn btn-primary" onclick="saveMenu()">
+        <i class="ph ph-floppy-disk"></i> Simpan Perubahan Menu
+    </button>
+
+    <!-- Form Tambah -->
+    <div class="card add-card">
+        <h2><i class="ph ph-plus-circle"></i> Tambah Menu Baru</h2>
+        <label>Nama Menu</label>
+        <input type="text" id="new-name" placeholder="Contoh: Ayam Bakar Spesial">
+        <div class="flex-row">
+            <div>
+                <label>Harga (Rp)</label>
+                <input type="number" id="new-price" placeholder="25000">
+            </div>
+            <div>
+                <label>Kategori</label>
+                <select id="new-cat">
+                    <option value="makanan">🍲 Makanan</option>
+                    <option value="minuman">🍹 Minuman</option>
+                    <option value="cemilan">🍟 Cemilan</option>
+                </select>
+            </div>
+        </div>
+        <label>Deskripsi</label>
+        <textarea id="new-desc" placeholder="Deskripsi singkat menu..."></textarea>
+        <label>URL Foto (opsional)</label>
+        <input type="text" id="new-img" placeholder="https://...">
+        <button class="btn btn-green btn-full" onclick="addItem()">
+            <i class="ph ph-plus"></i> Tambahkan ke Daftar
+        </button>
+    </div>
+
+    <!-- Daftar Menu -->
+    <div class="card">
+        <h2><i class="ph ph-list-bullets"></i> Daftar Menu Saat Ini</h2>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">
+            Klik <b>Simpan Perubahan Menu</b> setelah selesai mengedit.
+        </p>
+        <div id="items-container"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ TAB: PESANAN ═══════════════════════ -->
+<div class="panel" id="panel-orders">
+
+    <div class="filter-bar">
+        <button class="btn btn-sm status-pending" onclick="filterOrders('pending')" id="f-pending">🕐 Pending</button>
+        <button class="btn btn-sm status-proses"  onclick="filterOrders('proses')"  id="f-proses" >🔄 Diproses</button>
+        <button class="btn btn-sm status-selesai" onclick="filterOrders('selesai')" id="f-selesai">✅ Selesai</button>
+        <button class="btn btn-sm" style="background:#F1F5F9;color:#475569;border:1px solid #E2E8F0"
+            onclick="filterOrders('all')" id="f-all">📋 Semua</button>
+        <button class="btn btn-sm btn-danger" onclick="clearDoneOrders()" style="margin-left:auto">
+            <i class="ph ph-trash"></i> Hapus Selesai
+        </button>
+    </div>
+
+    <div id="orders-container">
+        <div class="empty-state"><span class="icon">📋</span><p>Belum ada pesanan.</p></div>
+    </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// CONSTANTS & HELPERS
+// ─────────────────────────────────────────────
+const RM_MENU_KEY   = 'rm_pondok_menu';
+const RM_ORDERS_KEY = 'rm_pondok_orders';
+
+const formatRp  = (n) => new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",minimumFractionDigits:0}).format(n);
+const formatTs  = (ts) => new Date(ts).toLocaleString("id-ID",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+
+function loadMenu()   { try{ const r=localStorage.getItem(RM_MENU_KEY);   return r?JSON.parse(r):getDefaultMenu(); }catch(e){return getDefaultMenu();} }
+function loadOrders() { try{ const r=localStorage.getItem(RM_ORDERS_KEY); return r?JSON.parse(r):{};             }catch(e){return {};} }
+function stoMenu(d)   { localStorage.setItem(RM_MENU_KEY,   JSON.stringify(d)); }
+function stoOrders(d) { localStorage.setItem(RM_ORDERS_KEY, JSON.stringify(d)); }
+
+function getDefaultMenu() {
+    return {
+        restaurantInfo:{ name:"RM. Pondok Marisa", tagline:"Cita Rasa Nusantara yang Menggugah Selera", openHours:"Buka Setiap Hari: 09.00 – 22.00" },
+        categories:[
+            {id:"makanan",name:"Makanan",icon:"🍲"},
+            {id:"minuman",name:"Minuman",icon:"🍹"},
+            {id:"cemilan",name:"Cemilan",icon:"🍟"}
+        ],
+        items:[
+            {id:1,category:"makanan",name:"Nasi Ayam Bakar Madu",    description:"Nasi putih panas dengan ayam bakar dilumuri madu pilihan, sambal terasi, dan lalapan segar.", price:25000,image:"https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?auto=format&fit=crop&q=80&w=500",recommended:true},
+            {id:2,category:"makanan",name:"Nasi Rendang Sapi Spesial",description:"Daging sapi empuk dengan bumbu rendang asli pedas gurih.",                                  price:28000,image:"https://images.unsplash.com/photo-1627996538056-bd44d216d773?auto=format&fit=crop&q=80&w=500",recommended:true},
+            {id:3,category:"makanan",name:"Mie Goreng Seafood",       description:"Mie goreng gurih dengan topping udang, cumi, dan sayuran segar.",                             price:22000,image:"https://images.unsplash.com/photo-1617093727343-374698b1b08d?auto=format&fit=crop&q=80&w=500",recommended:false},
+            {id:4,category:"makanan",name:"Soto Ayam Kampung",        description:"Soto berkuah kuning bening dengan suwiran ayam kampung dan telur rebus.",                     price:20000,image:"https://images.unsplash.com/photo-1649987483083-d3bceec188d2?auto=format&fit=crop&q=80&w=500",recommended:false},
+            {id:5,category:"minuman",name:"Es Jeruk Kelapa Muda",     description:"Perpaduan segar jeruk asli dengan serutan kelapa muda alami.",                               price:12000,image:"https://images.unsplash.com/photo-1600271886742-f049cd451bba?auto=format&fit=crop&q=80&w=500",recommended:true},
+            {id:6,category:"minuman",name:"Es Teh Manis Selasih",     description:"Teh tubruk pilihan dengan tambahan biji selasih yang menyegarkan.",                          price:6000, image:"https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&q=80&w=500",recommended:false},
+            {id:7,category:"minuman",name:"Kopi Susu Gula Aren",      description:"Kopi robusta campur susu segar dan manisnya gula aren murni.",                               price:15000,image:"https://images.unsplash.com/photo-1616422324905-dbbb9b7e7ab4?auto=format&fit=crop&q=80&w=500",recommended:false},
+            {id:8,category:"cemilan",name:"Pisang Goreng Keju Coklat",description:"Pisang kepok digoreng krispi dengan keju parut dan lelehan coklat.",                         price:12000,image:"https://images.unsplash.com/photo-1628101684307-e17f8670a8d6?auto=format&fit=crop&q=80&w=500",recommended:false},
+            {id:9,category:"cemilan",name:"Tahu Bakso Goreng",        description:"Tahu isi daging sapi cincang digoreng renyah, nikmati hangat dengan cabai rawit.",           price:10000,image:"https://images.unsplash.com/photo-1615555415252-0490b4d45d94?auto=format&fit=crop&q=80&w=500",recommended:true}
+        ]
+    };
+}
+
+// ─────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById(`tab-${tab}-btn`).classList.add('active');
+    document.getElementById(`panel-${tab}`).classList.add('active');
+    if (tab==='orders') { document.getElementById('notif-bar').style.display='none'; renderOrders(); }
+}
+
+// ─────────────────────────────────────────────
+// TAB MENU – KELOLA MENU
+// ─────────────────────────────────────────────
+let menuData = loadMenu();
+
+function renderEditor() {
+    const c = document.getElementById('items-container');
+    c.innerHTML = '';
+    if (!menuData.items || menuData.items.length===0) {
+        c.innerHTML = '<p style="color:#aaa;font-size:.9rem">Belum ada menu.</p>';
+        return;
+    }
+    menuData.items.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'item-card';
+        div.innerHTML = `
+            <div class="item-card-hd">
+                <span class="item-name">${item.name}</span>
+                <button class="btn btn-sm btn-danger" onclick="deleteItem(${idx})"><i class="ph ph-trash"></i> Hapus</button>
+            </div>
+            <div class="img-row">
+                <img src="${item.image||''}" class="img-preview"
+                     onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200'">
+                <div style="flex:1">
+                    <label>URL Foto Baru</label>
+                    <input type="text" id="img_${idx}" value="${item.image||''}" placeholder="https://..." style="margin-bottom:0" onchange="menuData.items[${idx}].image=this.value">
+                </div>
+            </div>
+            <div class="flex-row">
+                <div>
+                    <label>Nama Menu</label>
+                    <input type="text"   id="iName_${idx}"  value="${item.name}"  onchange="menuData.items[${idx}].name=this.value">
+                </div>
+                <div>
+                    <label>Harga (Rp)</label>
+                    <input type="number" id="iPrice_${idx}" value="${item.price}" onchange="menuData.items[${idx}].price=parseInt(this.value)||0">
+                </div>
+            </div>
+            <label>Deskripsi</label>
+            <input type="text" id="iDesc_${idx}" value="${item.description||''}" onchange="menuData.items[${idx}].description=this.value">
+            <label style="margin-top:.3rem">
+                <input type="checkbox" ${item.recommended?'checked':''} onchange="menuData.items[${idx}].recommended=this.checked" style="width:auto;margin:0 6px 0 0;">
+                Tandai sebagai Rekomendasi ⭐
+            </label>`;
+        c.appendChild(div);
+    });
+}
+
+function addItem() {
+    const name  = document.getElementById('new-name').value.trim();
+    const price = parseInt(document.getElementById('new-price').value);
+    const cat   = document.getElementById('new-cat').value;
+    const desc  = document.getElementById('new-desc').value.trim();
+    const img   = document.getElementById('new-img').value.trim()
+                  || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=500';
+
+    if (!name || isNaN(price)||price<=0) { alert('Nama dan harga wajib diisi!'); return; }
+
+    menuData.items.unshift({ id:Date.now(), name, price, category:cat, description:desc||'Menu lezat RM Pondok Marisa.', image:img, recommended:false });
+    ['new-name','new-price','new-desc','new-img'].forEach(id=>document.getElementById(id).value='');
+    renderEditor();
+    showAlert('success', `"${name}" berhasil ditambahkan ke daftar!`);
+}
+
+function deleteItem(idx) {
+    if (!confirm('Hapus menu ini?')) return;
+    menuData.items.splice(idx,1);
+    renderEditor();
+}
+
+function saveMenu() {
+    stoMenu(menuData);
+    showAlert('success','✅ Menu berhasil disimpan!');
+    window.scrollTo(0,0);
+}
+
+// ─────────────────────────────────────────────
+// TAB PESANAN
+// ─────────────────────────────────────────────
+let currentFilter = 'pending';
+
+function filterOrders(f) {
+    currentFilter = f;
+    renderOrders();
+}
+
+function renderOrders() {
+    const container = document.getElementById('orders-container');
+    const orders    = loadOrders();
+    let   list      = Object.entries(orders).map(([id,d])=>({id,...d}));
+    list.sort((a,b)=>b.timestamp-a.timestamp);
+
+    if (currentFilter!=='all') list=list.filter(o=>o.status===currentFilter);
+
+    if (list.length===0) {
+        const icons={pending:'🕐',proses:'🔄',selesai:'✅',tolak:'❌',all:'📋'};
+        container.innerHTML=`<div class="empty-state"><span class="icon">${icons[currentFilter]||'📋'}</span><p>Tidak ada pesanan ${currentFilter==='all'?'':currentFilter}.</p></div>`;
+        return;
+    }
+
+    container.innerHTML='';
+    list.forEach(order=>{
+        const statusLabel={pending:'🕐 Menunggu',proses:'🔄 Diproses',selesai:'✅ Selesai',tolak:'❌ Ditolak'}[order.status]||order.status;
+        const items = Array.isArray(order.items)?order.items:Object.values(order.items||{});
+        const itemsHtml = items.map(i=>`
+            <div class="oi-row">
+                <span class="oi-name">${i.name}</span>
+                <span class="oi-qty">x${i.qty}</span>
+                <span class="oi-sub">${formatRp(i.subtotal||i.price*i.qty)}</span>
+            </div>`).join('');
+
+        const actionBtns = order.status==='pending'
+            ?`<button class="btn btn-blue  btn-sm" onclick="updateStatus('${order.id}','proses')"><i class="ph ph-cooking-pot"></i> Proses</button>
+              <button class="btn btn-orange btn-sm" onclick="updateStatus('${order.id}','tolak')"><i class="ph ph-x"></i> Tolak</button>`
+            : order.status==='proses'
+            ?`<button class="btn btn-green  btn-sm" onclick="updateStatus('${order.id}','selesai')"><i class="ph ph-check"></i> Selesai</button>`
+            :'';
+
+        const card=document.createElement('div');
+        card.className='order-card';
+        card.innerHTML=`
+            <div class="order-hd">
+                <div>
+                    <div class="order-id">${order.id}</div>
+                    <div class="order-meta"><i class="ph ph-clock"></i> ${formatTs(order.timestamp)}</div>
+                </div>
+                <span class="status-badge status-${order.status}">${statusLabel}</span>
+            </div>
+            <div class="order-info">
+                <div class="chip"><i class="ph ph-user"></i> ${order.customerName}</div>
+                <div class="chip"><i class="ph ph-table"></i> ${order.tableNumber}</div>
+            </div>
+            <div class="order-items-box">${itemsHtml}</div>
+            ${order.note&&order.note!=='-'?`<div class="order-note"><i class="ph ph-note"></i> ${order.note}</div>`:''}
+            <div class="order-total">${formatRp(order.totalPrice)}</div>
+            <div class="order-actions">
+                ${actionBtns}
+                <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order.id}')"><i class="ph ph-trash"></i> Hapus</button>
+            </div>`;
+        container.appendChild(card);
+    });
+}
+
+function updateStatus(orderId, newStatus) {
+    const orders = loadOrders();
+    if (!orders[orderId]) return;
+    orders[orderId].status = newStatus;
+    stoOrders(orders);
+    renderOrders();
+    updateBadge();
+}
+
+function deleteOrder(orderId) {
+    if (!confirm('Hapus pesanan ini?')) return;
+    const orders = loadOrders();
+    delete orders[orderId];
+    stoOrders(orders);
+    renderOrders();
+    updateBadge();
+}
+
+function clearDoneOrders() {
+    if (!confirm('Hapus semua pesanan yang sudah Selesai atau Ditolak?')) return;
+    const orders = loadOrders();
+    Object.keys(orders).forEach(id=>{
+        if (orders[id].status==='selesai'||orders[id].status==='tolak') delete orders[id];
+    });
+    stoOrders(orders);
+    renderOrders();
+    updateBadge();
+}
+
+function updateBadge() {
+    const orders  = loadOrders();
+    const pending = Object.values(orders).filter(o=>o.status==='pending').length;
+    const badge   = document.getElementById('pending-badge');
+    if (pending>0) { badge.textContent=pending; badge.classList.add('show'); }
+    else             badge.classList.remove('show');
+}
+
+// ─────────────────────────────────────────────
+// ALERT HELPER
+// ─────────────────────────────────────────────
+function showAlert(type, msg) {
+    const el = document.getElementById(type==='success'?'success-alert':'error-alert');
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(()=>el.style.display='none', 4000);
+}
+
+// ─────────────────────────────────────────────
+// POLLING: cek pesanan baru setiap 5 detik
+// ─────────────────────────────────────────────
+let lastPendingCount = 0;
+
+function checkNewOrders() {
+    const orders  = loadOrders();
+    const pending = Object.values(orders).filter(o=>o.status==='pending').length;
+    updateBadge();
+
+    if (pending > lastPendingCount && !document.getElementById('panel-orders').classList.contains('active')) {
+        document.getElementById('notif-bar').style.display = 'block';
+    }
+    lastPendingCount = pending;
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+renderEditor();
+updateBadge();
+renderOrders();
+setInterval(checkNewOrders, 5000);
+</script>
+</body>
+</html>

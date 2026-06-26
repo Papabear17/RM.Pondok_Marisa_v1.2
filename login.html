@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RM. Pondok Marisa – Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { margin: 0; background: linear-gradient(135deg, #064e3b 0%, #065f46 40%, #047857 70%, #059669 100%); min-height: 100vh; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-8px); } 40%,80% { transform: translateX(8px); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+    .card { animation: fadeUp 0.5s ease-out both; }
+    .card:nth-child(2) { animation-delay: 0.1s; }
+    .pin-dot { width:14px; height:14px; border:2.5px solid rgba(255,255,255,0.3); border-radius:50%; transition:all 0.2s; }
+    .pin-dot.filled { background:white; border-color:white; transform:scale(1.25); box-shadow:0 0 12px rgba(255,255,255,0.9); }
+    .pin-key { cursor:pointer; transition:all 0.15s; outline:none; }
+    .pin-key:active { transform:scale(0.92) !important; }
+    .shake { animation: shake 0.35s; }
+    #overlay-bg { background: linear-gradient(135deg, #064e3b, #065f46); }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-6">
+
+  <!-- Header -->
+  <div class="text-center mb-10 card">
+    <div class="w-20 h-20 bg-white/10 backdrop-blur rounded-3xl flex items-center justify-center mx-auto mb-4 border border-white/20 shadow-2xl">
+      <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+      </svg>
+    </div>
+    <h1 class="text-white font-black text-3xl uppercase tracking-tighter">RM. Pondok Marisa</h1>
+    <p class="text-emerald-300 text-xs font-bold uppercase tracking-widest mt-1.5">Sistem Manajemen Restoran</p>
+  </div>
+
+  <!-- Pilih Panel -->
+  <div id="selectPanel" class="w-full max-w-md space-y-4">
+    <p class="text-white/60 text-center text-xs font-bold uppercase tracking-widest mb-6">Pilih Panel Akses</p>
+
+    <!-- Admin Card -->
+    <button onclick="showPin('admin')" class="card w-full bg-white/10 backdrop-blur border border-white/15 rounded-3xl p-6 text-left hover:bg-white/18 transition-all group shadow-xl hover:shadow-2xl hover:-translate-y-1">
+      <div class="flex items-center gap-5">
+        <div class="w-14 h-14 bg-emerald-400/20 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-400/30 transition-colors">
+          <svg class="w-7 h-7 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-white font-black text-lg uppercase tracking-tight">Panel Admin</h2>
+          <p class="text-white/50 text-xs font-medium mt-0.5">Dashboard · Produk · Laporan · Pengaturan · Menu Digital</p>
+        </div>
+        <svg class="w-5 h-5 text-white/30 ml-auto group-hover:text-white/60 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+    </button>
+
+    <!-- Kasir Card -->
+    <button onclick="showPin('kasir')" class="card w-full bg-white/10 backdrop-blur border border-white/15 rounded-3xl p-6 text-left hover:bg-white/18 transition-all group shadow-xl hover:shadow-2xl hover:-translate-y-1">
+      <div class="flex items-center gap-5">
+        <div class="w-14 h-14 bg-teal-400/20 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:bg-teal-400/30 transition-colors">
+          <svg class="w-7 h-7 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 20h16a2 2 0 002-2V8a2 2 0 00-2-2h-5.586a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 0011.586 3H4a2 2 0 00-2 2v13a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-white font-black text-lg uppercase tracking-tight">Panel Kasir</h2>
+          <p class="text-white/50 text-xs font-medium mt-0.5">Kasir POS · Pesanan Masuk</p>
+        </div>
+        <svg class="w-5 h-5 text-white/30 ml-auto group-hover:text-white/60 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+    </button>
+  </div>
+
+  <!-- PIN Gate Overlay -->
+  <div id="pinOverlay" class="fixed inset-0 z-50 hidden flex-col items-center justify-center p-6" style="background:linear-gradient(135deg,#064e3b,#065f46);">
+    <div class="w-full max-w-xs text-center flex flex-col items-center">
+      <!-- Back -->
+      <button onclick="hidePin()" class="self-start mb-6 flex items-center gap-2 text-white/50 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+        Kembali
+      </button>
+
+      <!-- Icon -->
+      <div id="pinIcon" class="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 shadow-xl border border-white/15">
+        <!-- isi via JS -->
+      </div>
+
+      <h2 id="pinTitle" class="text-white font-black text-xl uppercase tracking-tighter mb-1"></h2>
+      <p id="pinSub" class="text-white/40 text-xs font-bold uppercase tracking-widest mb-8"></p>
+
+      <!-- Dots -->
+      <div id="pinDots" class="flex gap-4 mb-10"></div>
+
+      <!-- Keypad -->
+      <div class="grid grid-cols-3 gap-4 w-64">
+        <!-- keys 1-9 -->
+        <script>
+          // rendered via JS below
+        </script>
+      </div>
+      <div id="pinKeypad"></div>
+
+      <!-- Error msg -->
+      <p id="pinError" class="text-rose-400 text-xs font-bold mt-5 opacity-0 transition-opacity">PIN salah, coba lagi</p>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="admin-app.js?v=2"></script>
+
+  <script>
+    // ======== CONFIG PIN ========
+    const KASIR_PIN_DEFAULT = '1234';
+    const KASIR_PIN_KEY = 'kasir_pin'; // disimpan di localStorage
+
+    let currentRole = null;
+    let currentInput = '';
+    let currentPinLength = 0;
+
+    // Redirect jika sudah login
+    (function() {
+      const role = sessionStorage.getItem('user_role');
+      if (role === 'admin') { window.location.href = 'index.html'; return; }
+      if (role === 'kasir') { window.location.href = 'kasir.html'; return; }
+    })();
+
+    async function getAdminPin() {
+      // Ambil dari localStorage dulu sebagai fallback
+      let localPin = '011105';
+      try {
+        const raw = localStorage.getItem('pengaturan');
+        if (raw) {
+          const s = JSON.parse(raw);
+          if (s.adminPin) localPin = s.adminPin;
+        }
+      } catch(e) {}
+      return localPin;
+    }
+
+    function getKasirPin() {
+      return localStorage.getItem(KASIR_PIN_KEY) || KASIR_PIN_DEFAULT;
+    }
+
+    async function showPin(role) {
+      currentRole = role;
+      currentInput = '';
+
+      const overlay = document.getElementById('pinOverlay');
+      overlay.style.display = 'flex';
+      overlay.classList.remove('hidden');
+
+      const isAdmin = role === 'admin';
+      const iconColor = isAdmin ? '#6ee7b7' : '#5eead4';
+      const bgColor = isAdmin ? 'rgba(52,211,153,0.15)' : 'rgba(94,234,212,0.15)';
+
+      document.getElementById('pinIcon').style.background = bgColor;
+      document.getElementById('pinIcon').innerHTML = isAdmin
+        ? `<svg style="width:28px;height:28px;color:${iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>`
+        : `<svg style="width:28px;height:28px;color:${iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 20h16a2 2 0 002-2V8a2 2 0 00-2-2h-5.586a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 0011.586 3H4a2 2 0 00-2 2v13a2 2 0 002 2z"/></svg>`;
+
+      document.getElementById('pinTitle').textContent = isAdmin ? 'Panel Admin' : 'Panel Kasir';
+      document.getElementById('pinSub').textContent = 'Masukkan PIN untuk melanjutkan';
+
+      // Tentukan panjang PIN
+      const pin = isAdmin ? await getAdminPin() : getKasirPin();
+      currentPinLength = pin.length;
+
+      buildDots();
+      buildKeypad();
+      updateDots();
+    }
+
+    function hidePin() {
+      const overlay = document.getElementById('pinOverlay');
+      overlay.style.display = 'none';
+      overlay.classList.add('hidden');
+      currentRole = null;
+      currentInput = '';
+      document.getElementById('pinError').style.opacity = '0';
+    }
+
+    function buildDots() {
+      const container = document.getElementById('pinDots');
+      container.innerHTML = '';
+      for (let i = 0; i < currentPinLength; i++) {
+        const d = document.createElement('div');
+        d.className = 'pin-dot';
+        container.appendChild(d);
+      }
+    }
+
+    function updateDots() {
+      const dots = document.querySelectorAll('#pinDots .pin-dot');
+      dots.forEach((d, i) => {
+        if (i < currentInput.length) {
+          d.classList.add('filled');
+        } else {
+          d.classList.remove('filled');
+        }
+      });
+    }
+
+    function buildKeypad() {
+      const container = document.getElementById('pinKeypad');
+      container.innerHTML = '';
+      container.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:16px;width:256px;margin:0 auto;';
+
+      const nums = [1,2,3,4,5,6,7,8,9,'clear',0,'back'];
+      nums.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = 'pin-key';
+        const strVal = String(val);
+
+        if (val === 'clear') {
+          btn.style.cssText = 'width:72px;height:72px;background:transparent;border:none;font-weight:800;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:#f43f5e;display:flex;align-items:center;justify-content:center;';
+          btn.textContent = 'Reset';
+        } else if (val === 'back') {
+          btn.style.cssText = 'width:72px;height:72px;background:transparent;border:none;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5);';
+          btn.innerHTML = `<svg style="width:22px;height:22px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414A2 2 0 0110.828 5H19a2 2 0 012 2v10a2 2 0 01-2 2h-8.172a2 2 0 01-1.414-.586L3 12z"/></svg>`;
+        } else {
+          btn.style.cssText = 'width:72px;height:72px;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.1);border-radius:50%;font-weight:800;font-size:1.4rem;color:white;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);';
+          btn.textContent = strVal;
+          btn.addEventListener('mouseenter', () => { btn.style.background = 'rgba(255,255,255,0.15)'; btn.style.transform = 'scale(1.06)'; });
+          btn.addEventListener('mouseleave', () => { btn.style.background = 'rgba(255,255,255,0.07)'; btn.style.transform = 'scale(1)'; });
+        }
+
+        btn.addEventListener('click', () => handleKey(strVal));
+        container.appendChild(btn);
+      });
+    }
+
+    async function handleKey(val) {
+      const errEl = document.getElementById('pinError');
+      errEl.style.opacity = '0';
+
+      if (val === 'clear') {
+        currentInput = '';
+      } else if (val === 'back') {
+        currentInput = currentInput.slice(0, -1);
+      } else {
+        if (currentInput.length < currentPinLength) currentInput += val;
+      }
+
+      updateDots();
+
+      if (currentInput.length === currentPinLength) {
+        const correctPin = currentRole === 'admin' ? await getAdminPin() : getKasirPin();
+        if (currentInput === correctPin) {
+          // Login berhasil
+          sessionStorage.setItem('user_role', currentRole);
+          // Admin juga tetap set admin_authenticated agar gate lama tidak muncul
+          if (currentRole === 'admin') sessionStorage.setItem('admin_authenticated', 'true');
+
+          const overlay = document.getElementById('pinOverlay');
+          overlay.style.transition = 'opacity 0.4s';
+          overlay.style.opacity = '0';
+          setTimeout(() => {
+            window.location.href = currentRole === 'admin' ? 'index.html' : 'kasir.html';
+          }, 350);
+        } else {
+          // PIN salah
+          const overlay = document.getElementById('pinOverlay');
+          overlay.classList.add('shake');
+          errEl.style.opacity = '1';
+          setTimeout(() => {
+            overlay.classList.remove('shake');
+            currentInput = '';
+            updateDots();
+          }, 350);
+        }
+      }
+    }
+
+    // Keyboard fisik
+    document.addEventListener('keydown', (e) => {
+      if (!currentRole) return;
+      if (e.key >= '0' && e.key <= '9') handleKey(e.key);
+      else if (e.key === 'Backspace') handleKey('back');
+      else if (e.key === 'Escape') hidePin();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+:root {
+    --primary: #059669;
+    --primary-dark: #047857;
+    --primary-light: #d1fae5;
+    --secondary: #64748b;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --radius: 1rem;
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+}
+
+.card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: all 0.2s;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* POS Specifics */
+.product-card {
+    cursor: pointer;
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.product-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.1);
+}
+
+.product-initials {
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 0.75rem;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+.category-tab {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.category-tab.active {
+    background: var(--primary);
+    color: white;
+}
+
+/* Modals */
+.modal-backdrop {
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    border-radius: 1.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Mobile Specific */
+#sidebar {
+    transition: transform 0.3s ease-in-out;
+}
+
+@media (max-width: 1023px) {
+    #sidebar.hidden-mobile {
+        transform: translateX(-100%);
+    }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.custom-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: #059669;
+    border-radius: 3px;
+}
+
+/* Add extra padding bottom to main content when on mobile so that the bottom navigation doesn't hide content */
+@media (max-width: 1023px) {
+    main.flex-1 {
+        padding-bottom: 5rem !important; /* give space for bottom nav */
+    }
+}

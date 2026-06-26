@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistem Kasir – Transaksi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #059669;
+            border-radius: 3px;
+        }
+
+        /* Mobile sidebar transition */
+        #sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        @media (max-width: 1023px) {
+            #sidebar.hidden-mobile {
+                transform: translateX(-100%);
+            }
+        }
+        
+        /* Hide scrollbar for sidebar */
+        #sidebar {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        #sidebar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- Auth Guard -->
+    <script src="auth.js?v=1"></script>
+</head>
+
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+    <!-- Sidebar overlay for mobile -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-20 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar ADMIN (hijau emerald) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-emerald-800 flex flex-col overflow-y-auto shadow-2xl z-40 transition-transform duration-300 lg:relative lg:translate-x-0 hidden-mobile" style="scrollbar-width:none;-ms-overflow-style:none;">
+        <div class="p-8">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
+                  <svg class="w-7 h-7 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-white font-black text-xl leading-none tracking-tighter uppercase">Panel Admin</h1>
+                    <p class="text-emerald-300 text-[9px] font-black tracking-widest uppercase mt-1 opacity-70">RM. Pondok Marisa</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 px-6 space-y-3">
+            <a href="index.html" class="nav-link flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-emerald-100 hover:bg-emerald-700/50 transition-all" data-page="dashboard">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>Dashboard
+            </a>
+            <a href="produk.html" class="nav-link flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-emerald-100 hover:bg-emerald-700/50 transition-all" data-page="produk">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>Produk
+            </a>
+            <a href="transaksi.html" class="nav-link flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-emerald-100 hover:bg-emerald-700/50 transition-all" data-page="transaksi">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>Transaksi
+            </a>
+            <a href="laporan.html" class="nav-link flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-emerald-100 hover:bg-emerald-700/50 transition-all" data-page="laporan">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Laporan
+            </a>
+            <a href="pengaturan.html" class="nav-link flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-emerald-100 hover:bg-emerald-700/50 transition-all" data-page="pengaturan">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Pengaturan
+            </a>
+            <a href="menu-hub.html" class="nav-link flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-emerald-100 hover:bg-emerald-700/50 transition-all" data-page="barcode">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>Menu Digital
+            </a>
+        </nav>
+        <div class="p-5 border-t border-emerald-700/50 space-y-2">
+            <p class="text-emerald-400 text-[10px] text-center" id="datetimeDisplay"></p>
+            <button onclick="authLogout()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-700/40 hover:bg-rose-600/80 text-emerald-200 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <div class="bg-white shadow-sm px-4 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+                <div>
+                    <h2 class="text-xl lg:text-2xl font-black text-slate-800 tracking-tight uppercase">Transaksi</h2>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest hidden sm:block mt-0.5">Riwayat Penjualan Lengkap</p>
+                </div>
+            </div>
+            <button onclick="hapusSemua()"
+                class="border border-red-200 text-red-500 hover:bg-red-50 px-3 lg:px-4 py-2 rounded-xl text-xs lg:text-sm font-medium flex items-center gap-2 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span class="hidden sm:inline">Hapus Semua</span>
+                <span class="sm:hidden">Reset</span>
+            </button>
+        </div>
+
+        <div class="p-8 flex-1 overflow-y-auto">
+            <!-- Filter -->
+            <div class="mb-6 flex gap-4 flex-wrap">
+                <div class="relative w-full lg:w-auto">
+                    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input id="searchTx" type="text" placeholder="Cari nomor faktur..." class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 lg:w-56" />
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <label class="text-sm text-gray-500 w-16 sm:w-auto">Dari:</label>
+                    <input id="filterFrom" type="date"
+                        class="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <label class="text-sm text-gray-500 w-16 sm:w-auto">Sampai:</label>
+                    <input id="filterTo" type="date"
+                        class="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300" />
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="applyFilter()"
+                        class="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all">Filter</button>
+                    <button onclick="resetFilter()"
+                        class="flex-1 border border-gray-200 text-gray-600 hover:bg-gray-50 px-4 py-2.5 rounded-xl text-sm font-medium transition-all">Reset</button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden overflow-x-auto">
+                <table class="w-full min-w-[700px]">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th
+                                class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                No. Faktur</th>
+                            <th
+                                class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Tanggal & Waktu</th>
+                            <th
+                                class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Item</th>
+                            <th
+                                class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Total</th>
+                            <th
+                                class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Metode</th>
+                            <th
+                                class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txTable" class="divide-y divide-gray-100"></tbody>
+                </table>
+                <div id="emptyTx" class="hidden py-16 text-center text-gray-400">
+                    <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <p>Belum ada transaksi</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Detail -->
+    <div id="modalDetail"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 lg:p-8 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-800">Detail Transaksi</h3>
+                <button onclick="closeDetail()" class="text-gray-400 hover:text-gray-600"><svg class="w-6 h-6"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg></button>
+            </div>
+            <div id="detailContent" class="space-y-4"></div>
+        </div>
+    </div>
+
+  <!-- Bottom Nav Mobile -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-30 lg:hidden flex items-center justify-around py-2 px-1 shadow-[0_-4px_10px_-4px_rgba(0,0,0,0.1)]">
+    <a href="index.html" class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all text-slate-400 hover:text-emerald-700">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+      <span class="text-[9px] font-black uppercase tracking-wider">Home</span>
+    </a>
+    <a href="kasir.html" class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all text-slate-400 hover:text-emerald-700">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 20h16a2 2 0 002-2V8a2 2 0 00-2-2h-5.586a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 0011.586 3H4a2 2 0 00-2 2v13a2 2 0 002 2z"/></svg>
+      <span class="text-[9px] font-black uppercase tracking-wider">Kasir</span>
+    </a>
+    <a href="produk.html" class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all text-slate-400 hover:text-emerald-700">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      <span class="text-[9px] font-black uppercase tracking-wider">Produk</span>
+    </a>
+    <a href="transaksi.html" class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all text-emerald-700 bg-emerald-50">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      <span class="text-[9px] font-black uppercase tracking-wider">Riwayat</span>
+    </a>
+    <a href="laporan.html" class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all text-slate-400 hover:text-emerald-700">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <span class="text-[9px] font-black uppercase tracking-wider">Laporan</span>
+    </a>
+      <a href="menu-hub.html" class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all text-slate-400 hover:text-emerald-700">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+      <span class="text-[9px] font-black uppercase tracking-wider">QR Menu</span>
+    </a>
+  </nav>
+
+    <script src="admin-app.js?v=2"></script>
+    <script>
+        setActiveNav('transaksi');
+        // Sidebar toggle for mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('hidden-mobile');
+            overlay.classList.toggle('hidden');
+        }
+
+        let allTx = [];
+
+        async function loadTx() {
+            allTx = await DB.load('transaksi');
+            renderTable([...allTx].reverse());
+        }
+
+        function renderTable(list) {
+            const tbody = document.getElementById('txTable');
+            const empty = document.getElementById('emptyTx');
+            if (list.length === 0) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+            empty.classList.add('hidden');
+            tbody.innerHTML = list.map(t => {
+                const metodeBadge = { 'Tunai': 'bg-emerald-100 text-emerald-700', 'Transfer': 'bg-emerald-100 text-emerald-700', 'QRIS': 'bg-emerald-100 text-emerald-700' };
+                const totalItem = t.items.reduce((s, i) => s + i.qty, 0);
+                return `
+          <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="openDetail(${t.id})">
+            <td class="px-6 py-4 font-mono text-sm font-semibold text-emerald-700">${t.nomorFaktur}</td>
+            <td class="px-6 py-4">
+              <p class="text-sm font-medium text-gray-800">${formatTanggal(t.waktu)}</p>
+              <p class="text-xs text-gray-500">${formatWaktu(t.waktu)}</p>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-600">${totalItem} item</td>
+            <td class="px-6 py-4 font-bold text-gray-800">${formatRp(t.total)}</td>
+            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium ${metodeBadge[t.metodeBayar] || 'bg-gray-100 text-gray-600'}">${t.metodeBayar}</span></td>
+            <td class="px-6 py-4">
+              <button class="text-emerald-700 hover:text-emerald-900 text-xs font-medium underline">Lihat detail</button>
+            </td>
+          </tr>
+        `;
+            }).join('');
+        }
+
+        function openDetail(id) {
+            const t = allTx.find(x => x.id === id);
+            if (!t) return;
+            document.getElementById('detailContent').innerHTML = `
+        <div class="bg-gray-50 rounded-xl p-4 space-y-2">
+          <div class="flex justify-between text-sm"><span class="text-gray-500">No. Faktur</span><span class="font-mono font-bold text-emerald-700">${t.nomorFaktur}</span></div>
+          <div class="flex justify-between text-sm"><span class="text-gray-500">Tanggal</span><span class="font-medium">${formatTanggal(t.waktu)} ${formatWaktu(t.waktu)}</span></div>
+          <div class="flex justify-between text-sm"><span class="text-gray-500">Metode Bayar</span><span class="font-medium">${t.metodeBayar}</span></div>
+          ${t.meja && t.meja !== '-' ? `<div class="flex justify-between text-sm"><span class="text-gray-500">Meja / Pelanggan</span><span class="font-medium font-bold text-emerald-700">${t.meja}</span></div>` : ''}
+        </div>
+        <div>
+          <h4 class="font-semibold text-gray-700 mb-3 text-sm">Item yang Dibeli</h4>
+          <div class="space-y-2">
+            ${t.items.map(i => `
+              <div class="flex justify-between items-start bg-gray-50 rounded-xl px-4 py-2.5">
+                <div>
+                  <p class="font-medium text-gray-800 text-sm uppercase">${i.nama} ${i.varian ? `<span class="text-emerald-700 text-[10px] ml-1">[${i.varian}]</span>` : ''}</p>
+                  <p class="text-gray-500 text-xs">${formatRp(i.harga)} × ${i.qty}</p>
+                  ${i.catatan ? `<p class="text-emerald-400 text-[10px] italic mt-1 font-medium">* ${i.catatan}</p>` : ''}
+                </div>
+                <span class="font-bold text-gray-700 text-sm">${formatRp(i.harga * i.qty)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="border-t border-gray-100 pt-4 space-y-2">
+          <div class="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span>${formatRp(t.subtotal)}</span></div>
+          ${t.diskon > 0 ? `<div class="flex justify-between text-sm text-gray-500"><span>Diskon</span><span class="text-rose-500">-${formatRp(t.diskon)}</span></div>` : ''}
+          <div class="flex justify-between text-sm text-gray-500"><span>Pajak (${((t.pajak / (t.subtotal - (t.diskon || 0))) * 100).toFixed(0)}%)</span><span>${formatRp(t.pajak)}</span></div>
+          <div class="flex justify-between font-bold text-base text-gray-800 pt-2 border-t"><span>TOTAL</span><span class="text-emerald-700">${formatRp(t.total)}</span></div>
+          <div class="flex justify-between text-sm text-gray-500"><span>Dibayar</span><span>${formatRp(t.dibayar)}</span></div>
+          <div class="flex justify-between text-sm font-semibold text-green-700"><span>Kembalian</span><span>${formatRp(t.kembalian)}</span></div>
+        </div>
+      `;
+            document.getElementById('modalDetail').classList.remove('hidden');
+            document.getElementById('modalDetail').classList.add('flex');
+        }
+
+        function closeDetail() {
+            document.getElementById('modalDetail').classList.add('hidden');
+            document.getElementById('modalDetail').classList.remove('flex');
+        }
+
+        let filterTimeout;
+        function applyFilter() {
+            clearTimeout(filterTimeout);
+            filterTimeout = setTimeout(() => {
+                const q = document.getElementById('searchTx').value.toLowerCase();
+                const from = document.getElementById('filterFrom').value;
+                const to = document.getElementById('filterTo').value;
+                let filtered = [...allTx].reverse();
+                if (q) filtered = filtered.filter(t => t.nomorFaktur.toLowerCase().includes(q));
+                if (from) filtered = filtered.filter(t => new Date(t.waktu) >= new Date(from));
+                if (to) filtered = filtered.filter(t => new Date(t.waktu) <= new Date(to + 'T23:59:59'));
+                renderTable(filtered);
+            }, 300);
+        }
+
+        document.getElementById('searchTx').addEventListener('input', applyFilter);
+        document.getElementById('filterFrom').addEventListener('change', applyFilter);
+        document.getElementById('filterTo').addEventListener('change', applyFilter);
+
+        function resetFilter() {
+            document.getElementById('searchTx').value = '';
+            document.getElementById('filterFrom').value = '';
+            document.getElementById('filterTo').value = '';
+            renderTable([...allTx].reverse());
+        }
+
+        async function hapusSemua() {
+            if (!confirm('Hapus semua riwayat transaksi? Tindakan ini tidak bisa dibatalkan.')) return;
+            await DB.save('transaksi', []);
+            allTx = [];
+            renderTable([]);
+        }
+
+        setActiveNav('transaksi');
+        setInterval(() => {
+            const now = new Date();
+            if (document.getElementById('datetimeDisplay')) {
+                document.getElementById('datetimeDisplay').textContent = 
+                    now.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) + 
+                    ' • ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+        }, 1000);
+
+        loadTx();
+    </script>
+</body>
+
+</html>

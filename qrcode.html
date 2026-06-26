@@ -1,0 +1,608 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator QR Code – RM. Pondok Marisa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root { --primary:#059669; --primary-dark:#047857; --green:#059669; --bg:#f0fdf4; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Outfit',sans-serif; background:var(--bg); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:2rem 1rem 3rem; }
+
+        .back-link { align-self:flex-start; display:flex; align-items:center; gap:6px; color:#718096; text-decoration:none; font-size:.88rem; font-weight:600; margin-bottom:1.5rem; transition:color .2s; }
+        .back-link:hover { color:var(--primary); }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        @media(min-width: 992px) {
+            .layout-grid {
+                grid-template-columns: 380px 1fr;
+            }
+        }
+
+        .card {
+            background:white; border-radius:24px; padding:2.5rem 2rem;
+            box-shadow:0 15px 40px rgba(0,0,0,.08); width:100%;
+            border:1px solid rgba(5,150,105,.08);
+            height: fit-content;
+        }
+        .card-table-generator {
+            background:white; border-radius:24px; padding:2.5rem 2rem;
+            box-shadow:0 15px 40px rgba(0,0,0,.08); width:100%;
+            border:1px solid rgba(5,150,105,.08);
+        }
+
+        .card-header { text-align:center; margin-bottom:2rem; }
+        .card-header .icon { font-size:2.5rem; display:block; margin-bottom:.5rem; }
+        .card-header h1 { font-size:1.5rem; font-weight:900; color:var(--primary); margin-bottom:.3rem; }
+        .card-header p { font-size:.85rem; color:#718096; line-height:1.5; }
+
+        label { display:block; font-size:.8rem; font-weight:800; color:var(--primary); margin-bottom:5px; text-transform:uppercase; letter-spacing:.5px; }
+        .form-group { margin-bottom:1.1rem; }
+        input[type="url"], input[type="text"], input[type="number"] {
+            width:100%; padding:.9rem 1.1rem; border:1.5px solid #E8E8E8;
+            border-radius:12px; font-family:'Outfit'; font-size:.95rem;
+            background:#FAFAFA; transition:all .2s; color:#1A202C;
+        }
+        input:focus { outline:none; border-color:var(--primary); background:white; box-shadow:0 0 0 3px rgba(5,150,105,.08); }
+
+        .btn-generate {
+            width:100%; background:var(--primary); color:white; border:none;
+            padding:1.1rem; border-radius:14px; font-size:1rem; font-weight:800;
+            cursor:pointer; font-family:'Outfit'; transition:all .25s;
+            display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:1.5rem;
+        }
+        .btn-generate:hover { background:#047857; transform:translateY(-2px); box-shadow:0 8px 20px rgba(5,150,105,.3); }
+
+        .btn-print {
+            background: #059669; color: white; border: none;
+            padding: 1.1rem; border-radius: 14px; font-size: 1rem; font-weight: 800;
+            cursor: pointer; font-family: 'Outfit'; transition: all 0.25s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-print:hover { background: #047857; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(5,150,105,.3); }
+
+        #qr-preview {
+            display:flex; justify-content:center; align-items:center;
+            min-height:220px; border:2px dashed rgba(5,150,105,.3);
+            border-radius:16px; background:#FFF5F5; margin-bottom:1.5rem;
+            position:relative; overflow:hidden;
+        }
+        #qr-preview canvas { border-radius:8px; max-width:100%; }
+        .qr-placeholder { color:#A0AEC0; font-size:.88rem; text-align:center; padding:1rem; }
+
+        .btn-download {
+            display:none; width:100%; background:var(--green); color:white;
+            border:none; padding:1rem; border-radius:14px; font-size:.95rem;
+            font-weight:800; cursor:pointer; font-family:'Outfit';
+            text-decoration:none; text-align:center; transition:all .25s;
+            align-items:center; justify-content:center; gap:8px;
+        }
+        .btn-download:hover { background:#1B4332; }
+
+        .tips { background:#F0FFF4; border:1px solid #C6F6D5; border-radius:12px; padding:1rem 1.2rem; margin-top:1.5rem; }
+        .tips p { font-size:.8rem; color:#276749; font-weight:600; line-height:1.6; }
+        .tips p + p { margin-top:.3rem; }
+
+        /* Styles for Table QR Grid */
+        .table-qr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .table-qr-card {
+            background: #fff; border: 1px solid #E8E8E8; border-radius: 16px;
+            padding: 1.2rem; text-align: center; display: flex; flex-direction: column;
+            align-items: center; justify-content: space-between; transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+        .table-qr-card:hover {
+            transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            border-color: rgba(5,150,105,.2);
+        }
+        .table-qr-title {
+            font-weight: 800; font-size: 1.05rem; color: var(--primary); margin-bottom: 0.5rem;
+        }
+        .table-qr-container {
+            width: 140px; height: 140px; display: flex; align-items: center; justify-content: center;
+            background: #FFF5F5; border-radius: 12px; overflow: hidden; margin-bottom: 0.8rem;
+            padding: 5px; border: 1px dashed rgba(5,150,105,.2);
+        }
+        .table-qr-container canvas {
+            max-width: 100% !important; max-height: 100% !important; height: auto !important; width: auto !important;
+        }
+        .table-qr-url {
+            font-size: 0.65rem; color: #718096; word-break: break-all; margin-bottom: 0.8rem;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+            height: 2.2em; line-height: 1.1;
+        }
+        .btn-download-table {
+            width: 100%; background: var(--green); color: white; border: none;
+            padding: 0.5rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700;
+            cursor: pointer; font-family: 'Outfit'; display: flex; align-items: center;
+            justify-content: center; gap: 4px; transition: all 0.2s;
+        }
+        .btn-download-table:hover { background: #1B4332; }
+
+        .flex-row-control { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 1rem; }
+        .flex-row-control > div { flex: 1; min-width: 120px; }
+
+        .btn-action-group { display: flex; gap: 12px; margin-top: 1rem; flex-wrap: wrap; }
+        .btn-action-group button, .btn-action-group a { flex: 1; min-width: 150px; }
+
+        /* Hide scrollbar for sidebar */
+        #sidebar { scrollbar-width: none; -ms-overflow-style: none; }
+        #sidebar::-webkit-scrollbar { display: none; }
+
+        /* PRINT STYLING */
+        @media print {
+            body { background: white !important; padding: 0 !important; margin: 0 !important; }
+            body > *:not(#print-area) { display: none !important; }
+            #print-area { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; }
+            .print-grid { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 25px !important; padding: 20px !important; }
+            .print-card {
+                border: 2px dashed #059669 !important; border-radius: 16px !important; padding: 25px 20px !important;
+                text-align: center !important; background: white !important; page-break-inside: avoid !important;
+                display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important;
+            }
+            .print-card h3 { margin: 0 0 5px 0 !important; font-size: 1.4rem !important; font-weight: 900 !important; color: #059669 !important; font-family: 'Outfit', sans-serif !important; }
+            .print-card p { margin: 0 0 12px 0 !important; font-size: 0.78rem !important; font-weight: 700 !important; color: #4A5568 !important; letter-spacing: 1px !important; font-family: 'Outfit', sans-serif !important; }
+            .print-card img { width: 170px !important; height: 170px !important; margin: 12px auto !important; display: block !important; }
+            .print-card .table-label { font-size: 1.6rem !important; font-weight: 900 !important; color: #059669 !important; margin-top: 8px !important; letter-spacing: 1px !important; font-family: 'Outfit', sans-serif !important; }
+        }
+    </style>
+
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <a href="menu-hub.html" class="back-link"><i class="ph ph-arrow-left"></i> Kembali ke Hub Menu Digital</a>
+
+    <div class="layout-grid">
+        <!-- Panel 1: QR Code Utama -->
+        <div class="card">
+            <div class="card-header">
+                <span class="icon">📱</span>
+                <h1>QR Menu Digital</h1>
+                <p>QR Code utama untuk mengakses menu digital restoran.</p>
+            </div>
+
+            <!-- Status loading -->
+            <div id="status-box" style="text-align:center; padding:1rem; background:#FFF9C4; border-radius:12px; margin-bottom:1rem; font-size:.85rem; font-weight:700; color:#856404; display:none;">
+                <i class="ph ph-spinner" style="animation:spin 1s linear infinite;display:inline-block;"></i>
+                <span id="status-text">Memuat pengaturan...</span>
+            </div>
+
+            <!-- URL input (tersembunyi, hanya untuk display) -->
+            <div class="form-group" id="url-group" style="display:none;">
+                <label for="urlInput">Link Menu Digital (Paten)</label>
+                <input type="url" id="urlInput" placeholder="https://namadomain.com/menu.html" value="" readonly style="background:#F0F0F0;cursor:not-allowed;opacity:0.7;">
+                <p style="font-size:.75rem;color:#718096;margin-top:4px;">🔒 URL ini paten dan tidak bisa diubah</p>
+            </div>
+
+            <div class="form-group" id="logo-group" style="display:none;">
+                <label for="logoText">Teks di Tengah QR (maks 5 huruf)</label>
+                <input type="text" id="logoText" placeholder="Contoh: RM" maxlength="5">
+            </div>
+
+            <!-- Tombol generate (muncul jika perlu manual) -->
+            <button class="btn-generate" id="btn-generate" onclick="generateQR()" style="display:none;">
+                <i class="ph ph-qr-code"></i> Buat QR Code
+            </button>
+
+            <div id="qr-preview">
+                <div class="qr-placeholder" id="qr-placeholder">
+                    <i class="ph ph-spinner" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.6;animation:spin 1s linear infinite;"></i>
+                    <span>Memuat QR Code otomatis...</span>
+                </div>
+            </div>
+
+            <button id="downloadBtn" class="btn-download" onclick="downloadQR()">
+                <i class="ph ph-download-simple"></i> Unduh QR Code (PNG)
+            </button>
+
+            <!-- Info URL yang dipakai -->
+            <div id="url-info" style="display:none; margin-top:1rem; padding:.8rem 1rem; background:#EEF2FF; border-radius:12px; font-size:.78rem; color:#4338CA; font-weight:600; word-break:break-all;">
+                <i class="ph ph-lock"></i> QR mengarah ke: <span id="url-display"></span>
+            </div>
+
+            <div class="tips" style="margin-top:1.5rem;">
+                <p>💡 <b>Tips:</b> Letakkan QR Utama ini di kasir, pintu masuk, atau brosur agar pelanggan bisa melihat menu dari mana saja.</p>
+            </div>
+        </div>
+
+        <!-- Panel 2: QR Code Per Meja -->
+        <div class="card-table-generator">
+            <div class="card-header" style="text-align: left; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 15px;">
+                <span class="icon" style="font-size: 2.5rem; margin-bottom: 0;">🪑</span>
+                <div>
+                    <h1 style="font-size: 1.5rem; font-weight: 900; color: var(--primary);">QR Code Per Meja</h1>
+                    <p style="font-size: .85rem; color: #718096; line-height: 1.5; margin-top: 2px;">Generate QR Code khusus untuk masing-masing meja. Scan otomatis mengisi nomor meja di form pesanan pelanggan.</p>
+                </div>
+            </div>
+
+            <!-- Kontrol Pengaturan Meja -->
+            <div class="flex-row-control">
+                <div>
+                    <label for="tableCount">Jumlah Meja</label>
+                    <input type="number" id="tableCount" value="8" min="1" max="50" oninput="generateTableQRs()">
+                </div>
+                <div>
+                    <label for="tablePrefix">Awalan Nama</label>
+                    <input type="text" id="tablePrefix" value="Meja" placeholder="Contoh: Meja" oninput="generateTableQRs()">
+                </div>
+                <div>
+                    <label for="logoTextTable">Teks Tengah QR</label>
+                    <input type="text" id="logoTextTable" value="RM" placeholder="Contoh: RM" maxlength="5" oninput="generateTableQRs()">
+                </div>
+            </div>
+
+            <button class="btn-print" onclick="printAllTableQRs()" style="width: 100%; margin-top: 0.5rem;">
+                <i class="ph ph-printer"></i> Cetak Semua QR Meja (A4 Grid)
+            </button>
+
+            <!-- Grid QR Meja -->
+            <div class="table-qr-grid" id="table-qr-grid">
+                <!-- Diisi otomatis oleh Javascript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="admin-app.js?v=2"></script>
+<script>
+    let qrcode = null;
+
+    // URL paten (tidak bisa diubah) - hanya nama saja yang bisa disesuaikan
+    const DEFAULT_MENU_URL = 'https://papabear17.github.io/RM.PONDOK_MARISA_SUDAH_FINAL/menu.html';
+
+    function showStatus(msg) {
+        const box = document.getElementById('status-box');
+        box.style.display = 'block';
+        document.getElementById('status-text').textContent = msg;
+    }
+    function hideStatus() {
+        document.getElementById('status-box').style.display = 'none';
+    }
+
+    function toggleEditUrl() {
+        const urlGroup  = document.getElementById('url-group');
+        const logoGroup = document.getElementById('logo-group');
+        const btnGen    = document.getElementById('btn-generate');
+        const isHidden  = urlGroup.style.display === 'none';
+        urlGroup.style.display  = isHidden ? 'block' : 'none';
+        logoGroup.style.display = isHidden ? 'block' : 'none';
+        btnGen.style.display    = isHidden ? 'flex'  : 'none';
+    }
+
+    // Inisialisasi otomatis saat halaman dibuka
+    async function initQR() {
+        try {
+            const settings = await DB.load('pengaturan') || {};
+            const merchantName = settings.merchantName || 'RM';
+
+            // Gunakan URL paten - tidak bisa diubah
+            const menuUrl = DEFAULT_MENU_URL;
+
+            // Set nilai input (hanya untuk display, tidak bisa diedit)
+            document.getElementById('urlInput').value = menuUrl;
+            const cleanName = merchantName.substring(0, 5).toUpperCase();
+            document.getElementById('logoText').value = cleanName;
+            document.getElementById('logoTextTable').value = cleanName;
+
+            // Tampilkan info URL
+            document.getElementById('url-display').textContent = menuUrl;
+            document.getElementById('url-info').style.display = 'block';
+
+            hideStatus();
+            // Generate QR otomatis
+            generateQR();
+            generateTableQRs();
+
+        } catch(e) {
+            console.warn('Gagal memuat pengaturan:', e);
+            document.getElementById('urlInput').value = DEFAULT_MENU_URL;
+            document.getElementById('logoText').value = 'RM';
+            document.getElementById('logoTextTable').value = 'RM';
+            document.getElementById('url-display').textContent = DEFAULT_MENU_URL;
+            document.getElementById('url-info').style.display = 'block';
+            hideStatus();
+            generateQR();
+            generateTableQRs();
+        }
+    }
+
+    function generateQR() {
+        // Selalu gunakan URL paten
+        const url      = DEFAULT_MENU_URL;
+        const logoText = document.getElementById('logoText').value.trim();
+        const container = document.getElementById('qr-preview');
+        const dlBtn    = document.getElementById('downloadBtn');
+
+        if (!url) {
+            document.getElementById('qr-placeholder').innerHTML = '<i class="ph ph-warning" style="font-size:2rem;display:block;margin-bottom:.5rem;color:#E53E3E;"></i><span style="color:#E53E3E;">URL tidak tersedia.</span>';
+            return;
+        }
+
+        container.innerHTML = '';
+        dlBtn.style.display = 'none';
+
+        if (qrcode) { qrcode = null; }
+
+        qrcode = new QRCode(container, {
+            text:         url,
+            width:        500,
+            height:       500,
+            colorDark:    "#000000",
+            colorLight:   "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        setTimeout(() => {
+            const canvas = container.querySelector('canvas');
+            if (!canvas) return;
+            const ctx    = canvas.getContext('2d');
+            const size   = canvas.width;
+            const center = size / 2;
+
+            if (logoText) {
+                const boxSize = size * 0.22;
+                ctx.fillStyle = 'white';
+                ctx.fillRect(center - boxSize/2, center - boxSize/2, boxSize, boxSize);
+                ctx.fillStyle    = '#059669';
+                ctx.font         = `900 ${boxSize * 0.44}px Outfit, sans-serif`;
+                ctx.textAlign    = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(logoText.toUpperCase(), center, center);
+            }
+
+            const merchantName = (document.getElementById('logoText').value || 'RM-Pondok-Marisa').toLowerCase().replace(/\s+/g, '-');
+            dlBtn.dataset.filename = `qr-menu-${merchantName}.png`;
+            dlBtn.style.display = 'flex';
+        }, 900);
+    }
+
+    // ── Generate QR Code untuk Setiap Meja ──
+    window.generateTableQRs = () => {
+        const count = parseInt(document.getElementById('tableCount').value) || 8;
+        const prefix = document.getElementById('tablePrefix').value.trim() || 'Meja';
+        const logoText = document.getElementById('logoTextTable').value.trim().substring(0, 5).toUpperCase();
+        const gridContainer = document.getElementById('table-qr-grid');
+        
+        gridContainer.innerHTML = '';
+        
+        for (let i = 1; i <= count; i++) {
+            const tableName = `${prefix} ${i}`;
+            const url = `${DEFAULT_MENU_URL}?meja=${encodeURIComponent(tableName)}`;
+            
+            const card = document.createElement('div');
+            card.className = 'table-qr-card';
+            card.innerHTML = `
+                <div class="table-qr-title">${tableName.toUpperCase()}</div>
+                <div class="table-qr-container" id="qr-table-${i}"></div>
+                <div class="table-qr-url">${url}</div>
+                <button class="btn-download-table" onclick="downloadTableQR(${i}, '${tableName}')">
+                    <i class="ph ph-download-simple"></i> Unduh PNG
+                </button>
+            `;
+            gridContainer.appendChild(card);
+            
+            const qrContainer = document.getElementById(`qr-table-${i}`);
+            new QRCode(qrContainer, {
+                text:         url,
+                width:        400,
+                height:       400,
+                colorDark:    "#000000",
+                colorLight:   "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            setTimeout(() => {
+                const canvas = qrContainer.querySelector('canvas');
+                if (!canvas) return;
+                const ctx    = canvas.getContext('2d');
+                const size   = canvas.width;
+                const center = size / 2;
+
+                if (logoText) {
+                    const boxSize = size * 0.22;
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(center - boxSize/2, center - boxSize/2, boxSize, boxSize);
+                    ctx.fillStyle    = '#059669';
+                    ctx.font         = `900 ${boxSize * 0.44}px Outfit, sans-serif`;
+                    ctx.textAlign    = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(logoText, center, center);
+                }
+            }, 900);
+        }
+    };
+
+    // ── Download Individual Table QR ──
+    window.downloadTableQR = (index, tableName) => {
+        const qrContainer = document.getElementById(`qr-table-${index}`);
+        const canvas = qrContainer.querySelector('canvas');
+        if (!canvas) {
+            alert('QR Code belum siap, silakan tunggu sebentar.');
+            return;
+        }
+        
+        const filename = `qr-${tableName.toLowerCase().replace(/\s+/g, '-')}.png`;
+        
+        try {
+            if (window.Capacitor && window.Capacitor.isPluginAvailable('Filesystem')) {
+                const canvas2 = document.createElement('canvas');
+                canvas2.width = canvas.width;
+                canvas2.height = canvas.height;
+                const ctx = canvas2.getContext('2d');
+                ctx.drawImage(canvas, 0, 0);
+
+                canvas2.toBlob(async (blob) => {
+                    try {
+                        const reader = new FileReader();
+                        reader.onloadend = async () => {
+                            const base64data = reader.result.split(',')[1];
+                            const { Filesystem, Directory } = window.Capacitor.Plugins;
+                            
+                            await Filesystem.writeFile({
+                                path: filename,
+                                data: base64data,
+                                directory: Directory.Documents,
+                                recursive: true,
+                            });
+                            
+                            alert(`✅ QR Code ${tableName} berhasil disimpan ke Downloads!\n\nNama file: ${filename}`);
+                        };
+                        reader.readAsDataURL(blob);
+                    } catch(err) {
+                        console.error('Error saving QR to file system:', err);
+                        alert('❌ Gagal menyimpan QR Code.');
+                    }
+                }, 'image/png');
+            } else {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = filename;
+                link.click();
+            }
+        } catch(err) {
+            console.error('Download error:', err);
+            alert('❌ Gagal mengunduh QR Code.');
+        }
+    };
+
+    // ── Cetak Semua QR Meja dalam Grid A4 ──
+    window.printAllTableQRs = () => {
+        const count = parseInt(document.getElementById('tableCount').value) || 8;
+        const prefix = document.getElementById('tablePrefix').value.trim() || 'Meja';
+        const printArea = document.getElementById('print-area');
+        
+        printArea.innerHTML = '';
+        
+        const printGrid = document.createElement('div');
+        printGrid.className = 'print-grid';
+        
+        for (let i = 1; i <= count; i++) {
+            const tableName = `${prefix} ${i}`;
+            const qrContainer = document.getElementById(`qr-table-${i}`);
+            if (!qrContainer) continue;
+            
+            const canvas = qrContainer.querySelector('canvas');
+            if (!canvas) continue;
+            
+            const printCard = document.createElement('div');
+            printCard.className = 'print-card';
+            
+            const title = document.createElement('h3');
+            title.textContent = 'RM. PONDOK MARISA';
+            printCard.appendChild(title);
+            
+            const subtitle = document.createElement('p');
+            subtitle.textContent = 'SILAKAN SCAN UNTUK MEMESAN';
+            printCard.appendChild(subtitle);
+            
+            const img = document.createElement('img');
+            img.src = canvas.toDataURL('image/png');
+            printCard.appendChild(img);
+            
+            const tableLabel = document.createElement('div');
+            tableLabel.className = 'table-label';
+            tableLabel.textContent = tableName.toUpperCase();
+            printCard.appendChild(tableLabel);
+            
+            printGrid.appendChild(printCard);
+        }
+        
+        printArea.appendChild(printGrid);
+        window.print();
+    };
+
+    // Jalankan otomatis
+    initQR();
+
+    // ── Download QR untuk APK & Browser ──
+    window.downloadQR = async () => {
+        const container = document.getElementById('qr-preview');
+        const canvas = container.querySelector('canvas');
+        
+        if (!canvas) {
+            alert('QR Code belum dihasilkan. Buat QR Code terlebih dahulu.');
+            return;
+        }
+
+        const merchantName = (document.getElementById('logoText').value || 'RM-Pondok-Marisa').toLowerCase().replace(/\s+/g, '-');
+        const filename = `qr-menu-${merchantName}.png`;
+
+        try {
+            // === UNTUK APK (Capacitor) ===
+            if (window.Capacitor && window.Capacitor.isPluginAvailable('Filesystem')) {
+                const canvas2 = document.createElement('canvas');
+                canvas2.width = canvas.width;
+                canvas2.height = canvas.height;
+                const ctx = canvas2.getContext('2d');
+                ctx.drawImage(canvas, 0, 0);
+
+                canvas2.toBlob(async (blob) => {
+                    try {
+                        const reader = new FileReader();
+                        reader.onloadend = async () => {
+                            const base64data = reader.result.split(',')[1];
+                            
+                            const { Filesystem, Directory } = window.Capacitor.Plugins;
+                            const downloadPath = Directory.Documents;
+                            
+                            await Filesystem.writeFile({
+                                path: filename,
+                                data: base64data,
+                                directory: downloadPath,
+                                recursive: true,
+                            });
+                            
+                            alert(`✅ QR Code berhasil disimpan ke Downloads!\n\nNama file: ${filename}`);
+                        };
+                        reader.readAsDataURL(blob);
+                    } catch(err) {
+                        console.error('Error saving QR to file system:', err);
+                        alert('❌ Gagal menyimpan QR Code. Coba cara lain.');
+                    }
+                }, 'image/png');
+            } 
+            // === UNTUK BROWSER ===
+            else {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = filename;
+                link.click();
+                alert(`✅ QR Code berhasil diunduh!\n\nNama file: ${filename}`);
+            }
+        } catch(err) {
+            console.error('Download error:', err);
+            alert('❌ Gagal mengunduh QR Code.');
+        }
+    };
+</script>
+<style>
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+<div id="print-area" style="display: none;"></div>
+</body>
+</html>

@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistem Kasir – Pesanan Masuk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="admin-style.css" />
+    <style>
+        #sidebar { 
+            transition: transform 0.3s ease-in-out; 
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        #sidebar::-webkit-scrollbar {
+            display: none;
+        }
+        @media (max-width: 1023px) {
+            #sidebar.hidden-mobile { transform: translateX(-100%); }
+        }
+        .order-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .order-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .animate-in {
+            animation: slideIn 0.4s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- Auth Guard -->
+    <script src="auth.js?v=1"></script>
+</head>
+
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+    <!-- Sidebar overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-20 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar KASIR (emerald, hanya 2 menu) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-emerald-800 flex flex-col overflow-y-auto shadow-2xl z-40 transition-transform duration-300 lg:relative lg:translate-x-0 hidden-mobile" style="scrollbar-width:none;">
+        <div class="p-8">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
+                  <svg class="w-7 h-7 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 20h16a2 2 0 002-2V8a2 2 0 00-2-2h-5.586a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 0011.586 3H4a2 2 0 00-2 2v13a2 2 0 002 2z"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-white font-black text-xl leading-none tracking-tighter uppercase">Panel Kasir</h1>
+                    <p class="text-emerald-300 text-[9px] font-black tracking-widest uppercase mt-1 opacity-70">RM. Pondok Marisa</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 px-6 space-y-3">
+            <a href="kasir.html" class="nav-link flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-emerald-100 hover:bg-emerald-700/50 transition-all" data-page="kasir">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 20h16a2 2 0 002-2V8a2 2 0 00-2-2h-5.586a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 0011.586 3H4a2 2 0 00-2 2v13a2 2 0 002 2z"/></svg>
+                Kasir / POS
+            </a>
+            <a href="pesanan-masuk.html" class="nav-link flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-emerald-100 hover:bg-emerald-700/50 transition-all" data-page="orders">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                Pesanan Masuk
+            </a>
+        </nav>
+        <div class="p-5 border-t border-emerald-700/50 space-y-2">
+            <p class="text-emerald-400 text-[10px] text-center" id="datetimeDisplay"></p>
+            <button onclick="authLogout()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-700/40 hover:bg-rose-600/80 text-emerald-200 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Bar -->
+        <div class="bg-white shadow-sm px-6 lg:px-10 py-5 flex items-center justify-between sticky top-0 z-10 border-b border-slate-100">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-xl hover:bg-gray-100 text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+                </button>
+                <div>
+                    <h2 class="text-xl lg:text-2xl font-black text-slate-800 tracking-tight uppercase">Pesanan Masuk</h2>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest hidden sm:block mt-0.5">Pantau Antrean Pesanan Pelanggan (QR Menu)</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="clearCompleted()" class="bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
+                    Bersihkan Riwayat
+                </button>
+            </div>
+        </div>
+
+        <div class="p-6 lg:p-10 flex-1 overflow-y-auto bg-gray-50">
+            <!-- Stats Ringkas -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[10px] font-black text-amber-500 uppercase tracking-widest">Menunggu</p>
+                        <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center"><svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                    </div>
+                    <p class="text-3xl font-black text-slate-800 mt-2" id="stat-pending">0</p>
+                </div>
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Diproses</p>
+                        <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center"><svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></div>
+                    </div>
+                    <p class="text-3xl font-black text-slate-800 mt-2" id="stat-proses">0</p>
+                </div>
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Selesai</p>
+                        <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center"><svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div>
+                    </div>
+                    <p class="text-3xl font-black text-slate-800 mt-2" id="stat-selesai">0</p>
+                </div>
+            </div>
+
+            <!-- List Pesanan -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="order-list">
+                <!-- Template Kosong -->
+                <div class="col-span-full py-20 text-center">
+                    <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-400 uppercase tracking-widest">Belum Ada Pesanan</h3>
+                    <p class="text-slate-400 text-xs mt-1 font-medium">Pesanan dari menu digital akan muncul di sini secara otomatis.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Bukti Bayar -->
+    <div id="buktiModal" class="fixed inset-0 bg-black/80 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <button onclick="closeBuktiModal()" class="absolute top-6 right-6 text-white bg-white/20 hover:bg-white/40 p-3 rounded-full transition-all">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <img id="buktiImage" src="" class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain">
+    </div>
+
+    <script src="admin-app.js?v=2"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('hidden-mobile');
+            document.getElementById('sidebarOverlay').classList.toggle('hidden');
+        }
+
+        let allDrafts = [];
+
+        let previousOrderIds = [];
+
+        async function init() {
+            // Load data awal
+            const initialData = await DB.load('draft_transaksi') || [];
+            previousOrderIds = initialData.map(o => o.id);
+            allDrafts = initialData;
+            
+            // MIGRATION: Pindahkan pesanan lama yang sudah Selesai ke Laporan (Transaksi)
+            await migrateOldCompletedOrders();
+
+            renderOrders();
+
+            // Real-time listener untuk draft_transaksi
+            if (typeof DB.listen === 'function') {
+                DB.listen('draft_transaksi', (newData) => {
+                    const incoming = newData || [];
+                    // Mainkan notifikasi hanya jika ada pesanan baru (belum diproses & belum selesai)
+                    // yang id-nya tidak ada di database sebelumnya
+                    const hasNewOrder = incoming.some(o => !previousOrderIds.includes(o.id) && !o.isProcessed && !o.isDone);
+                    previousOrderIds = incoming.map(o => o.id);
+                    allDrafts = incoming;
+                    renderOrders();
+                    if (hasNewOrder) {
+                        playNotif();
+                    }
+                });
+            } else {
+                // Fallback polling
+                setInterval(async () => {
+                    const data = await DB.load('draft_transaksi') || [];
+                    if (JSON.stringify(data) !== JSON.stringify(allDrafts)) {
+                        const hasNewOrder = data.some(o => !previousOrderIds.includes(o.id) && !o.isProcessed && !o.isDone);
+                        previousOrderIds = data.map(o => o.id);
+                        allDrafts = data;
+                        renderOrders();
+                        if (hasNewOrder) {
+                            playNotif();
+                        }
+                    }
+                }, 5000);
+            }
+        }
+
+        function renderOrders() {
+            const list = document.getElementById('order-list');
+            const pStat = document.getElementById('stat-pending');
+            const prStat = document.getElementById('stat-proses');
+            const sStat = document.getElementById('stat-selesai');
+
+            const pendingCount = allDrafts.filter(o => !o.isProcessed && !o.isDone).length;
+            const prosesCount = allDrafts.filter(o => o.isProcessed && !o.isDone).length;
+            const selesaiCount = allDrafts.filter(o => o.isDone).length;
+
+            pStat.textContent = pendingCount;
+            prStat.textContent = prosesCount;
+            sStat.textContent = selesaiCount;
+
+            if (allDrafts.length === 0) {
+                list.innerHTML = `<div class="col-span-full py-20 text-center">
+                    <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-400 uppercase tracking-widest">Belum Ada Pesanan</h3>
+                    <p class="text-slate-400 text-xs mt-1 font-medium">Pesanan dari menu digital akan muncul di sini secara otomatis.</p>
+                </div>`;
+                return;
+            }
+
+            // Buat array referensi index agar fungsi button tetap bekerja, lalu reverse agar terbaru di atas
+            const reversedDrafts = allDrafts.map((order, idx) => ({ order, idx })).reverse();
+
+            list.innerHTML = reversedDrafts.map(({order, idx}) => {
+                const statusColor = order.isDone ? 'emerald' : (order.isProcessed ? 'emerald' : 'amber');
+                const statusLabel = order.isDone ? 'Selesai' : (order.isProcessed ? 'Diproses' : 'Menunggu');
+                
+                return `
+                <div class="order-card animate-in bg-white rounded-3xl p-6 shadow-sm border-l-4 border-${statusColor}-500 border-y border-r border-slate-100 flex flex-col h-full">
+                    <div class="flex justify-between items-start mb-4 gap-3">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 px-2 py-1 bg-slate-50 rounded-lg">#${order.id.toString().slice(-4)}</span>
+                                ${order.time ? `
+                                <span class="text-[9px] font-bold text-slate-400 bg-emerald-50/50 text-emerald-600 px-2 py-1 rounded-lg inline-flex items-center gap-1">
+                                    <svg style="width:10px; height:10px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    ${new Date(order.time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                ` : ''}
+                            </div>
+                            <h3 class="text-lg font-black text-slate-800 mt-2 leading-tight break-words">${order.tag}</h3>
+                        </div>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-${statusColor}-600 bg-${statusColor}-50 px-3 py-1.5 rounded-xl border border-${statusColor}-100 shrink-0 mt-1">
+                            ${statusLabel}
+                        </span>
+                    </div>
+
+                    <div class="space-y-4 mb-6 flex-1">
+                        ${order.items.map(item => `
+                            <div class="flex justify-between items-start text-sm gap-3">
+                                <div class="flex items-start gap-3 flex-1">
+                                    <span class="w-7 h-7 shrink-0 bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center font-bold text-[11px] border border-slate-100">${item.qty}x</span>
+                                    <div>
+                                        <span class="font-bold text-slate-700 leading-snug break-words">${item.nama}</span>
+                                        ${item.varian ? `<span class="text-emerald-600 text-[10px] ml-2 bg-emerald-50 px-2 py-0.5 rounded inline-block">[${item.varian}]</span>` : ''}
+                                    </div>
+                                </div>
+                                <span class="font-black text-slate-400 text-xs whitespace-nowrap pt-1">${formatRp(item.harga * item.qty)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    ${order.note ? `
+                        <div class="bg-amber-50 p-3 rounded-2xl mb-6 flex gap-2">
+                            <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+                            <p class="text-[11px] font-bold text-amber-700 leading-tight">${order.note}</p>
+                        </div>
+                    ` : ''}
+
+                    ${order.buktiBayar ? `
+                        <div class="mb-4 mt-auto">
+                            <button onclick="viewBuktiBayar('${order.buktiBayar}')" class="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                Lihat Bukti Transfer / QRIS
+                            </button>
+                        </div>
+                    ` : ''}
+
+                    <div class="flex items-end justify-between pt-5 border-t border-slate-100 ${!order.buktiBayar ? 'mt-auto' : ''} gap-3">
+                        <div class="flex-1">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
+                            <p class="text-xl font-black text-emerald-700 leading-none break-all">${formatRp(order.total || order.items.reduce((s,i) => s + (i.harga*i.qty), 0))}</p>
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                            ${!order.isProcessed && !order.isDone ? `
+                                <button onclick="processOrder(${idx})" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-md shadow-emerald-200">Proses</button>
+                            ` : ''}
+                            ${order.isProcessed && !order.isDone ? `
+                                <button onclick="finishOrder(${idx})" class="bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-md shadow-emerald-200">Selesai</button>
+                            ` : ''}
+                            <button onclick="deleteDraft(${idx})" class="w-11 h-11 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-100 transition-all shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        async function processOrder(idx) {
+            allDrafts[idx].isProcessed = true;
+            await DB.save('draft_transaksi', allDrafts);
+            renderOrders();
+        }
+
+        async function finishOrder(idx) {
+            const order = allDrafts[idx];
+            order.isDone = true;
+            order.isSavedToTx = true; // Tandai sudah masuk laporan
+            
+            try {
+                // Ambil setting untuk hitung pajak
+                const settings = await DB.load('pengaturan') || {};
+                const rate = (settings.taxRate || 0) / 100;
+                
+                // Hitung total
+                const subtotal = order.items.reduce((s, c) => s + (c.harga * c.qty), 0);
+                const pajak = subtotal * rate;
+                const total = subtotal + pajak;
+                
+                // Format transaksi standar Laporan
+                const tx = {
+                    id: Date.now() + Math.floor(Math.random() * 1000), // Unique ID
+                    nomorFaktur: 'INV' + Date.now().toString().slice(-6),
+                    waktu: new Date().toISOString(),
+                    items: order.items,
+                    subtotal: subtotal,
+                    pajak: pajak,
+                    diskon: 0,
+                    total: total,
+                    metodeBayar: order.buktiBayar ? 'Transfer' : 'Tunai',
+                    dibayar: total, // Asumsi bayar pas jika dari QR
+                    kembalian: 0,
+                    meja: order.tag || '-'
+                };
+
+                const transactions = await DB.load('transaksi') || [];
+                transactions.push(tx);
+                await DB.save('transaksi', transactions);
+            } catch(e) {
+                console.error("Gagal menyimpan ke Laporan:", e);
+            }
+
+            await DB.save('draft_transaksi', allDrafts);
+            renderOrders();
+        }
+
+        async function migrateOldCompletedOrders() {
+            let hasChanges = false;
+            let transactions = null;
+            let settings = null;
+            let rate = 0;
+
+            for (let i = 0; i < allDrafts.length; i++) {
+                const order = allDrafts[i];
+                // Jika pesanan sudah Selesai TAPI belum pernah disimpan ke Transaksi
+                if (order.isDone && !order.isSavedToTx) {
+                    if (!transactions) {
+                        transactions = await DB.load('transaksi') || [];
+                        settings = await DB.load('pengaturan') || {};
+                        rate = (settings.taxRate || 0) / 100;
+                    }
+
+                    const subtotal = order.items.reduce((s, c) => s + (c.harga * c.qty), 0);
+                    const pajak = subtotal * rate;
+                    const total = subtotal + pajak;
+
+                    const tx = {
+                        id: Date.now() + i + Math.floor(Math.random() * 1000), // Unique ID
+                        nomorFaktur: 'INV' + (Date.now() - (i*1000)).toString().slice(-6),
+                        waktu: order.time || new Date().toISOString(),
+                        items: order.items,
+                        subtotal: subtotal,
+                        pajak: pajak,
+                        diskon: 0,
+                        total: total,
+                        metodeBayar: order.buktiBayar ? 'Transfer' : 'Tunai',
+                        dibayar: total,
+                        kembalian: 0,
+                        meja: order.tag || '-'
+                    };
+
+                    transactions.push(tx);
+                    order.isSavedToTx = true;
+                    hasChanges = true;
+                }
+            }
+
+            if (hasChanges && transactions) {
+                await DB.save('transaksi', transactions);
+                await DB.save('draft_transaksi', allDrafts);
+                console.log("[MIGRASI] Berhasil memindahkan pesanan selesai lama ke Laporan.");
+            }
+        }
+
+        async function deleteDraft(idx) {
+            if (!confirm('Hapus pesanan ini?')) return;
+            allDrafts.splice(idx, 1);
+            await DB.save('draft_transaksi', allDrafts);
+            renderOrders();
+        }
+
+        async function clearCompleted() {
+            if (!confirm('Hapus semua pesanan yang sudah selesai?')) return;
+            allDrafts = allDrafts.filter(o => !o.isDone);
+            await DB.save('draft_transaksi', allDrafts);
+            renderOrders();
+        }
+
+        // ==========================================
+        // FIX #3: Robust Sound Notification System
+        // Mengatasi browser autoplay policy + fallback
+        // ==========================================
+        let audioUnlocked = false;
+        let audioCtx = null;
+
+        // Auto-unlock jika user klik/sentuh di area MANA SAJA di layar
+        const autoUnlock = () => { unlockAudio(); };
+        document.addEventListener('click', autoUnlock, { once: true });
+        document.addEventListener('touchstart', autoUnlock, { once: true });
+        document.addEventListener('keydown', autoUnlock, { once: true });
+
+        // Fungsi unlock audio — dipanggil saat user klik tombol
+        window.unlockAudio = function() {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                // Resume AudioContext (wajib setelah user gesture)
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                // Mainkan beep senyap 0.01 detik untuk unlock engine
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                gain.gain.value = 0.01; // hampir silent
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.01);
+
+                audioUnlocked = true;
+
+                // Ganti tombol Top Bar jadi "Suara Aktif"
+                const btn = document.getElementById('btnEnableSoundHeader');
+                if (btn) {
+                    btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700', 'animate-pulse');
+                    btn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+                    btn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <span>Suara Aktif</span>
+                    `;
+                    btn.onclick = null;
+                    
+                    // Hilangkan tombol pelan-pelan agar antarmuka bersih
+                    setTimeout(() => {
+                        btn.style.transition = 'opacity 0.5s';
+                        btn.style.opacity = '0';
+                        setTimeout(() => btn.remove(), 500);
+                    }, 2000);
+                }
+
+                console.log('[MarisaPOS] Audio engine unlocked ✅');
+            } catch(e) {
+                console.warn('[MarisaPOS] Gagal unlock audio:', e);
+            }
+        };
+
+        function playNotif() {
+            // Visual notification banner (selalu tampil)
+            showVisualNotif();
+
+            // Web Audio API — tidak butuh internet, tidak diblokir CDN
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Buat 3 nada beep pendek naik
+                const beeps = [
+                    { freq: 880, start: 0, duration: 0.15 },
+                    { freq: 1046, start: 0.2, duration: 0.15 },
+                    { freq: 1318, start: 0.4, duration: 0.25 }
+                ];
+                
+                beeps.forEach(({ freq, start, duration }) => {
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    oscillator.frequency.value = freq;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime + start);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + duration);
+                    
+                    oscillator.start(audioCtx.currentTime + start);
+                    oscillator.stop(audioCtx.currentTime + start + duration);
+                });
+            } catch(e) {
+                console.warn('Audio tidak bisa diputar:', e);
+            }
+        }
+
+        // Visual notification — banner hijau di atas layar
+        function showVisualNotif() {
+            const existing = document.getElementById('new-order-notif');
+            if (existing) existing.remove();
+
+            const notif = document.createElement('div');
+            notif.id = 'new-order-notif';
+            notif.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);z-index:9998;background:linear-gradient(135deg,#059669,#10b981);color:white;padding:14px 28px;border-radius:16px;font-weight:800;font-size:0.85rem;box-shadow:0 20px 30px -10px rgba(5,150,105,0.5);display:flex;align-items:center;gap:12px;opacity:0;transition:all 0.4s cubic-bezier(0.4,0,0.2,1);';
+            notif.innerHTML = `
+                <svg style="width:22px;height:22px;animation:ring 0.5s ease-in-out 3;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                🆕 Pesanan Baru Masuk!
+            `;
+            // Tambah style animasi ring
+            if (!document.getElementById('ring-animation-style')) {
+                const style = document.createElement('style');
+                style.id = 'ring-animation-style';
+                style.textContent = '@keyframes ring { 0%{transform:rotate(0)} 15%{transform:rotate(15deg)} 30%{transform:rotate(-15deg)} 45%{transform:rotate(10deg)} 60%{transform:rotate(-10deg)} 75%{transform:rotate(5deg)} 100%{transform:rotate(0)} }';
+                document.head.appendChild(style);
+            }
+            document.body.appendChild(notif);
+
+            // Animate in
+            requestAnimationFrame(() => {
+                notif.style.opacity = '1';
+                notif.style.transform = 'translateX(-50%) translateY(0)';
+            });
+
+            // Auto-hide setelah 5 detik
+            setTimeout(() => {
+                notif.style.opacity = '0';
+                notif.style.transform = 'translateX(-50%) translateY(-20px)';
+                setTimeout(() => notif.remove(), 400);
+            }, 5000);
+        }
+
+        function viewBuktiBayar(base64Image) {
+            document.getElementById('buktiImage').src = base64Image;
+            document.getElementById('buktiModal').classList.remove('hidden');
+            document.getElementById('buktiModal').classList.add('flex');
+        }
+
+        function closeBuktiModal() {
+            document.getElementById('buktiModal').classList.add('hidden');
+            document.getElementById('buktiModal').classList.remove('flex');
+            document.getElementById('buktiImage').src = '';
+        }
+
+        init();
+        setActiveNav('orders');
+        setInterval(() => {
+            const now = new Date();
+            if (document.getElementById('datetimeDisplay')) {
+                document.getElementById('datetimeDisplay').textContent = 
+                    now.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) + 
+                    ' • ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
