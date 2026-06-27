@@ -479,24 +479,32 @@
             renderKategoriList();
         }
 
-        // Kompres gambar ke max 400px, quality 0.55 agar tidak melebihi localStorage quota
+        // Kompres gambar sangat kecil agar muat di Firestore (max 200px, quality 0.4)
         function compressImage(file, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
-                    const MAX = 400;
+                    const MAX = 200;
                     let w = img.width, h = img.height;
                     if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
                     else { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
                     const canvas = document.createElement('canvas');
                     canvas.width = w; canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    callback(canvas.toDataURL('image/jpeg', 0.55));
+                    const result = canvas.toDataURL('image/jpeg', 0.4);
+                    console.log('[Foto] Ukuran setelah kompres:', Math.round(result.length / 1024), 'KB');
+                    callback(result);
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
+        }
+
+        // Tidak pakai Firebase Storage (butuh upgrade plan)
+        // Foto disimpan langsung sebagai base64 kecil di Firestore
+        async function uploadFotoToStorage(base64, produkId) {
+            return base64; // Langsung return base64 yang sudah dikompres kecil
         }
 
         function previewImage(input) {
@@ -574,7 +582,7 @@
             const variasi = varianRaw ? varianRaw.split(',').map(v => v.trim()).filter(v => v) : [];
             const catatan = document.getElementById('fCatatan').value.trim();
             const imgPreview = document.getElementById('imgPreview');
-            const gambar = imgPreview.classList.contains('hidden') ? '' : imgPreview.src;
+            const gambarBaru = imgPreview.classList.contains('hidden') ? '' : imgPreview.src;
 
             if (!nama) { alert('Nama produk tidak boleh kosong!'); document.getElementById('fNama').focus(); return; }
             if (hargaRaw === '' || isNaN(harga) || harga <= 0) { alert('Harga harus diisi!'); document.getElementById('fHarga').focus(); return; }
@@ -584,36 +592,35 @@
 
             try {
                 const editId = document.getElementById('editId').value;
+
                 if (editId) {
                     const idx = produkList.findIndex(x => x.id == editId);
                     if (idx !== -1) {
-                        const gambarFinal = gambar || produkList[idx].gambar || '';
+                        const gambarFinal = gambarBaru || produkList[idx].gambar || '';
                         produkList[idx] = { ...produkList[idx], nama, kategori, harga, variasi, catatan, gambar: gambarFinal };
                     }
                 } else {
                     const newId = (typeof genId === 'function') ? genId() : (Date.now() + Math.floor(Math.random() * 1000));
-                    produkList.push({ id: newId, nama, kategori, harga, variasi, catatan, gambar });
+                    produkList.push({ id: newId, nama, kategori, harga, variasi, catatan, gambar: gambarBaru });
                 }
 
-                // Coba simpan dengan gambar dulu
-                try {
-                    await DB.save('produk', produkList);
-                } catch(quotaErr) {
-                    // Kalau quota exceeded, simpan tanpa gambar
-                    if (quotaErr.name === 'QuotaExceededError' || (quotaErr.message && quotaErr.message.includes('quota'))) {
-                        const produkTanpaFoto = produkList.map(p => ({ ...p, gambar: '' }));
-                        await DB.save('produk', produkTanpaFoto);
-                        alert('⚠️ Foto tidak tersimpan ke cloud karena kapasitas penuh. Produk tetap tersimpan.');
-                    } else {
-                        throw quotaErr;
-                    }
-                }
-
+                await DB.save('produk', produkList);
                 closeModal();
                 renderTable(produkList);
+
             } catch(e) {
                 console.error('[saveProduk]', e);
-                alert('Gagal menyimpan: ' + e.message);
+                if (e.message && e.message.includes('quota')) {
+                    // Simpan tanpa foto jika masih quota error
+                    const idx2 = produkList.length - 1;
+                    if (idx2 >= 0) produkList[idx2].gambar = '';
+                    await DB.save('produk', produkList);
+                    closeModal();
+                    renderTable(produkList);
+                    alert('⚠️ Foto terlalu besar. Coba foto yang lebih kecil ukurannya.');
+                } else {
+                    alert('Gagal menyimpan: ' + e.message);
+                }
             } finally {
                 if (btn) { btn.disabled = false; btn.textContent = 'Simpan Menu'; }
             }
