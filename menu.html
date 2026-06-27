@@ -14,8 +14,106 @@
     <!-- Firebase SDK Compat (hanya Firestore, sesuai app.js) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+    /* ===== SPLASH SCREEN PELANGGAN ===== */
+    #menu-splash {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(160deg, #011f16 0%, #053d2e 40%, #065f46 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 0;
+      transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #menu-splash.hide { opacity: 0; transform: scale(1.04); pointer-events: none; }
+
+    .ms-logo {
+      width: 88px; height: 88px;
+      background: rgba(110,231,183,0.12);
+      border: 1.5px solid rgba(110,231,183,0.25);
+      border-radius: 26px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 36px;
+      animation: msLogoIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+      box-shadow: 0 0 40px rgba(110,231,183,0.15), 0 20px 60px rgba(0,0,0,0.4);
+    }
+    @keyframes msLogoIn {
+      0%   { opacity: 0; transform: scale(0.5) translateY(20px); filter: blur(8px); }
+      100% { opacity: 1; transform: scale(1) translateY(0);     filter: blur(0); }
+    }
+
+    .ms-welcome {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(1.15rem, 5vw, 2.1rem);
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+      text-shadow: 0 2px 30px rgba(0,0,0,0.4);
+      white-space: nowrap;
+      animation: msTitleIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both;
+      margin-bottom: 12px;
+    }
+    .ms-welcome span { color: #6ee7b7; }
+    @keyframes msTitleIn {
+      0%   { opacity: 0; transform: translateY(28px) scale(0.95); filter: blur(6px); }
+      100% { opacity: 1; transform: translateY(0) scale(1);       filter: blur(0); }
+    }
+
+    .ms-sub {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.7rem; font-weight: 700;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      animation: msSubIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.7s both;
+    }
+    @keyframes msSubIn {
+      0%   { opacity: 0; transform: translateY(12px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .ms-bar-wrap {
+      width: 160px; height: 2px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 99px;
+      margin-top: 44px;
+      overflow: hidden;
+      animation: msSubIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.8s both;
+    }
+    .ms-bar {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #34d399, #6ee7b7, #a7f3d0);
+      border-radius: 99px;
+      animation: msLoadBar 2.5s cubic-bezier(0.4, 0, 0.2, 1) 0.9s forwards;
+    }
+    @keyframes msLoadBar {
+      0%   { width: 0%; }
+      100% { width: 100%; }
+    }
+    </style>
 </head>
 <body>
+
+    <!-- ===== SPLASH SCREEN PELANGGAN ===== -->
+    <div id="menu-splash">
+      <div class="ms-logo">
+        <svg style="width:44px;height:44px;color:#6ee7b7;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+      </div>
+      <p class="ms-welcome">SELAMAT DATANG DI <span>RM. Pondok Marisa</span></p>
+      <p class="ms-sub">Silakan pilih menu favorit Anda</p>
+      <div class="ms-bar-wrap"><div class="ms-bar"></div></div>
+    </div>
+
+    <script>
+      // Sembunyikan splash pelanggan setelah 3 detik
+      setTimeout(function() {
+        var s = document.getElementById('menu-splash');
+        s.classList.add('hide');
+        setTimeout(function() { s.style.display = 'none'; }, 1000);
+      }, 3000);
+    </script>
 
     <!-- HEADER -->
     <header class="glass-header">
