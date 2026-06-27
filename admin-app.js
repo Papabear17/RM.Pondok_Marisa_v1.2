@@ -19,8 +19,9 @@ try {
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
 
-        // Aktifkan Offline Persistence agar tidak melambat saat koneksi tidak stabil
-        db.enablePersistence().catch(err => console.warn('[MarisaPOS] Persistence failed:', err.code));
+        // DINONAKTIFKAN: Offline persistence menyebabkan data foto lama terus muncul
+        // karena Firestore cache tidak terupdate dengan benar saat foto baru disimpan
+        // db.enablePersistence().catch(err => console.warn('[MarisaPOS] Persistence failed:', err.code));
 
         console.log('[MarisaPOS] Firebase Firestore terhubung:', firebaseConfig.projectId);
     }
@@ -32,21 +33,10 @@ try {
 const DB = {
     _cache: {},
     async load(key) {
-        // Ambil secara instan dari lokal agar UI tidak lag
-        const raw = localStorage.getItem(key);
-        let localData = null;
-        if (raw) {
+        // Selalu ambil dari Firestore server dulu (bukan cache) agar data selalu fresh
+        if (db) {
             try {
-                localData = JSON.parse(raw);
-                DB._cache[key] = localData; // Init in-memory cache
-            } catch (e) { }
-        }
-
-        // FIX #3: Jika localStorage kosong dan Firebase tersedia, tunggu data Firebase
-        // agar halaman tidak render dengan data default saat pertama kali buka
-        if (!localData && db) {
-            try {
-                const docSnap = await db.collection('PondokMarisaPOS').doc(key).get();
+                const docSnap = await db.collection('PondokMarisaPOS').doc(key).get({ source: 'server' });
                 if (docSnap.exists) {
                     const data = docSnap.data().data;
                     localStorage.setItem(key, JSON.stringify(data));
@@ -54,28 +44,21 @@ const DB = {
                     return data;
                 }
             } catch (e) {
-                console.warn(`[DB.load] firebase error untuk ${key}:`, e.message);
+                console.warn(`[DB.load] server fetch gagal untuk ${key}, pakai lokal:`, e.message);
             }
-            return getDefault(key);
         }
 
-        // Kalau data lokal sudah ada, sinkron Firebase di background (non-blocking)
-        if (db) {
-            (async () => {
-                try {
-                    const docSnap = await db.collection('PondokMarisaPOS').doc(key).get();
-                    if (docSnap.exists) {
-                        const data = docSnap.data().data;
-                        localStorage.setItem(key, JSON.stringify(data));
-                        DB._cache[key] = data;
-                    }
-                } catch (e) {
-                    console.warn(`[DB.load] background sync error untuk ${key}:`, e.message);
-                }
-            })();
+        // Fallback: ambil dari localStorage jika Firestore tidak bisa diakses
+        const raw = localStorage.getItem(key);
+        if (raw) {
+            try {
+                const localData = JSON.parse(raw);
+                DB._cache[key] = localData;
+                return localData;
+            } catch (e) { }
         }
 
-        return localData || getDefault(key);
+        return getDefault(key);
     },
 
     async save(key, data) {
@@ -83,15 +66,29 @@ const DB = {
         localStorage.setItem(key, JSON.stringify(data));
         DB._cache[key] = data;
 
-        // Background sync tanpa await agar UI ga macet!
-        if (db) {
-            db.collection('PondokMarisaPOS').doc(key).set({
-                data: data,
-                updatedAt: new Date().toISOString()
-            }).catch(e => console.warn(`[DB.save] firebase gagal sinkron ${key}:`, e.message));
+        // Cek ukuran data sebelum kirim ke Firestore (limit ~1MB)
+        const sizeKB = Math.round(JSON.stringify(data).length / 1024);
+        if (sizeKB > 900) {
+            console.error(`[DB.save] DATA TERLALU BESAR! ${sizeKB}KB — Firestore akan menolak!`);
+            alert(`⚠️ Data terlalu besar (${sizeKB}KB)!\n\nMasih ada foto lama di data. Halaman akan reload untuk membersihkan.`);
+            window.location.reload();
+            return false;
         }
 
-        return true; // langsung true
+        // Sync ke Firebase dan TUNGGU konfirmasi
+        if (db) {
+            try {
+                await db.collection('PondokMarisaPOS').doc(key).set({
+                    data: data,
+                    updatedAt: new Date().toISOString()
+                });
+            } catch(e) {
+                console.warn(`[DB.save] firebase gagal sinkron ${key}:`, e.message);
+                alert(`❌ Gagal simpan ke server: ${e.message}`);
+            }
+        }
+
+        return true;
     },
 
     listen(key, callback) {

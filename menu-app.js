@@ -133,14 +133,23 @@ document.addEventListener("DOMContentLoaded", async () => {
             let p = [], set = {}, cat = [];
             
             if (db) {
-                const produkSnap = await db.collection('PondokMarisaPOS').doc('produk').get();
+                // Paksa ambil dari server (bukan cache) agar foto terbaru selalu tampil
+                const getOpts = { source: 'server' };
+                let produkSnap, setSnap, catSnap;
+                try {
+                    produkSnap = await db.collection('PondokMarisaPOS').doc('produk').get(getOpts);
+                    setSnap    = await db.collection('PondokMarisaPOS').doc('pengaturan').get(getOpts);
+                    catSnap    = await db.collection('PondokMarisaPOS').doc('kategori').get(getOpts);
+                } catch(serverErr) {
+                    // Kalau server tidak bisa diakses, fallback ke cache
+                    console.warn('[Menu] Server fetch gagal, pakai cache:', serverErr.message);
+                    produkSnap = await db.collection('PondokMarisaPOS').doc('produk').get();
+                    setSnap    = await db.collection('PondokMarisaPOS').doc('pengaturan').get();
+                    catSnap    = await db.collection('PondokMarisaPOS').doc('kategori').get();
+                }
                 if (produkSnap.exists) p = produkSnap.data().data || [];
-
-                const setSnap = await db.collection('PondokMarisaPOS').doc('pengaturan').get();
-                if (setSnap.exists) set = setSnap.data().data || {};
-
-                const catSnap = await db.collection('PondokMarisaPOS').doc('kategori').get();
-                if (catSnap.exists) cat = catSnap.data().data || [];
+                if (setSnap.exists)    set = setSnap.data().data || {};
+                if (catSnap.exists)    cat = catSnap.data().data || [];
             } else {
                 if (window.electronAPI) {
                     p = await window.electronAPI.readData('produk.json') || [];
